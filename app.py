@@ -8,8 +8,12 @@ from io import BytesIO
 from xhtml2pdf import pisa
 
 
-# Pull the key directly from Streamlit's encrypted secrets dictionary
-api_key = st.secrets["OPENAI_API_KEY"]
+# Use .get() so it doesn't crash if the key is missing
+api_key = st.secrets.get("OPENAI_API_KEY")
+
+if not api_key:
+    st.error("OpenAI API Key is missing. Please set it in Streamlit Secrets.")
+    st.stop() # Stops the code cleanly without a traceback
 
 # Initialize the client
 client = OpenAI(api_key=api_key)
