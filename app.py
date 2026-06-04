@@ -36,7 +36,7 @@ with st.sidebar:
     st.title("⚙️ Preferences")
     selected_language = st.selectbox(
         "🌐 Choose Report Language:",
-        ["English", "Hindi (हिंदी)", "Kannada (ಕನ್ನಡ)", "Tamil (தமிழ்)", "Telugu (తెలుగు)", "Marathi (मराठी)", "Gujarati (ગુજરાતી)", "Bengali (বাংলা)"]
+        ["English", "Hindi (हिंदी)", "Kannada (ಕನ್ನಡ)", "Tamil (தமிழ்)", "Telugu (తెలుగు)", "Marathi (मराठी)", "Gujarati (ગુજરાતી)", "Bengali (বাংলা)", "Punjabi (ਪੰਜਾਬੀ)", "Malayalam (മലയാളം)"]
     )
     st.info(f"The Digital Vaidya & Clinical Translator will automatically analyze your reports and reply in **{selected_language}**.")
 
