@@ -177,7 +177,6 @@ st.markdown(
 from supabase import create_client, Client
 
 # --- PREMIUM FEATURE UTR VALIDATION ---
-st.markdown("### 🔍 Advanced Diagnostic Analysis")
 st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and tailored dietary matching. (Fee: ₹49)")
 
 # Check if premium is already unlocked in this session
