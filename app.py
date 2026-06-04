@@ -173,62 +173,58 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# 2. Check if the user has paid
+# Add this to your imports at the very top of app.py
+from supabase import create_client, Client
+
+# --- PREMIUM FEATURE UTR VALIDATION ---
+st.markdown("### 🔍 Advanced Diagnostic Analysis")
+st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and tailored dietary matching. (Fee: ₹49)")
+
+# Check if premium is already unlocked in this session
+if "premium_unlocked" not in st.session_state:
+    st.session_state.premium_unlocked = False
+
 if not st.session_state.premium_unlocked:
-    st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and tailored dietary matching.")
-    if not st.session_state.show_qr:
-        pay_col, info_col = st.columns([1, 2], vertical_alignment="center")
-        with pay_col:
-            if st.button("Unlock Feature (₹49)"):
-                st.session_state.show_qr = True
-                st.rerun()
-        with info_col:
-            st.caption("⚡ One-time fee per analysis. Pay securely via any UPI App (GPay, PhonePe, Paytm).")
+    # 1. Display the QR Code
+    st.image("QRCODE.jpeg", width=250)
+    st.markdown("**UPI ID:** `dinesha.vishwanatha05-2@okaxis`")
+    st.write("1. Scan the QR code or copy the UPI ID to pay ₹49.")
+    st.write("2. Enter your 12-digit UTR (Transaction ID) below to unlock.")
+    
+    # 2. The Verification Input
+    utr_input = st.text_input("Enter 12-Digit UTR Number:", max_chars=12)
+    
+    if st.button("Verify Payment & Unlock"):
+        if len(utr_input) == 12 and utr_input.isdigit():
             
-    else:
-        qr_col, text_col = st.columns([1, 1])
-        with qr_col:
-            st.image("QRCODE.jpeg", width=250)
-        with text_col:
-            st.write("### Complete Your Payment")
-            st.write("1. Open **GPay, PhonePe, or Paytm** on your phone.")
-            st.write("2. Scan the QR code or send **₹49** directly to:")
-            st.code("dinesha.vishwanatha05-2@okaxis")
-            
-            st.write("---")
-            st.write("### 🔐 Verify Transaction")
-            
-            # Form forces the input before execution
-            with st.form("payment_verification_form"):
-                utr_input = st.text_input(
-                    "Enter 12-Digit UPI Ref No. / UTR ID:", 
-                    placeholder="e.g., 3145XXXXXXXX",
-                    max_chars=12
-                )
-                submit_verification = st.form_submit_button("Submit & Unlock Dashboard")
+            # --- SUPABASE DATABASE CHECK ---
+            try:
+                # Connect to Supabase
+                supabase_url = st.secrets["SUPABASE_URL"]
+                supabase_key = st.secrets["SUPABASE_KEY"]
+                supabase: Client = create_client(supabase_url, supabase_key)
                 
-                if submit_verification:
-                    # Clean up the input text
-                    clean_utr = utr_input.strip()
+                # Check if UTR is already in the database
+                response = supabase.table("claimed_utrs").select("*").eq("utr_number", utr_input).execute()
+                
+                if len(response.data) > 0:
+                    # UTR FOUND: It's a duplicate! Block access.
+                    st.error("⚠️ This Transaction ID has already been used. Please enter a new valid UTR.")
+                else:
+                    # UTR NOT FOUND: It's new! Save it and unlock.
+                    supabase.table("claimed_utrs").insert({"utr_number": utr_input}).execute()
+                    st.session_state.premium_unlocked = True
+                    st.rerun() # Refresh the UI to show the uploader
                     
-                    # Basic Validation: Ensure it is a 12-digit number common to Indian UPI systems
-                    if len(clean_utr) == 12 and clean_utr.isdigit():
-                        st.session_state.premium_unlocked = True
-                        
-                        # In your logs dashboard, you will see who submitted what key
-                        # Perfect for checking your bank statement later
-                        st.toast(f"UTR Submitted for verification: {clean_utr}") 
-                        st.success("UTR Recorded! Opening Dashboard...")
-                        st.rerun()
-                    else:
-                        st.error("❌ Invalid Transaction ID. Please enter the full 12-digit numerical UTR found in your UPI app receipt.")
+            except Exception as e:
+                st.error("Database connection error. Please try again or contact support.")
+        else:
+            st.error("❌ Please enter a valid 12-digit UTR number.")
 
 else:
-    # This section unlocks ONLY after a successful payment
-    st.success("🔓 **Premium Active:** Visual Analysis Enabled")
-    
-   # 2. The File Uploader
-    uploaded_file = st.file_uploader("Upload a photo of your joint or a medical report (PNG, JPG)", type=["png", "jpg", "jpeg"])
+    # 3. Premium Unlocked - Show File Uploader
+    st.success("✅ Payment Verified! Premium Features Unlocked.")
+    uploaded_file = st.file_uploader("Upload your medical report or joint image here:", type=["png", "jpg", "jpeg"])
     
     if uploaded_file is not None:
         import hashlib
