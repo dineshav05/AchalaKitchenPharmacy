@@ -182,6 +182,28 @@ if "premium_unlocked" not in st.session_state:
     st.session_state.premium_unlocked = False
 
 if not st.session_state.premium_unlocked:
+    # 1. Inject custom CSS to make the expander pop
+        st.markdown(
+            """
+            <style>
+            /* Target the expander header */
+            [data-testid="stExpander"] details summary {
+                background-color: #1a2a40; /* Deep premium blue background */
+                border: 2px solid #4da6ff; /* Bright blue border */
+                border-radius: 8px;
+                color: #ffffff;
+                font-weight: bold;
+                padding: 10px;
+            }
+            /* Add a glowing effect when the user hovers over it */
+            [data-testid="stExpander"] details summary:hover {
+                border-color: #00e676; /* Changes to success green on hover */
+                box-shadow: 0px 0px 10px rgba(0, 230, 118, 0.4);
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
     # 1. Hide the aggressive payment UI inside a neat dropdown expander
     with st.expander("🔓 Click here to unlock Premium Visual Analysis (Fee: ₹49)"):
         st.info("Upload a photo of your joint or a medical report for deep visual analysis and tailored dietary matching.")
