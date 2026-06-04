@@ -177,51 +177,51 @@ st.markdown(
 from supabase import create_client, Client
 
 # --- PREMIUM FEATURE UTR VALIDATION ---
-st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and tailored dietary matching. (Fee: ₹49)")
-
 # Check if premium is already unlocked in this session
 if "premium_unlocked" not in st.session_state:
     st.session_state.premium_unlocked = False
 
 if not st.session_state.premium_unlocked:
-    # 1. Display the QR Code
-    st.image("QRCODE.jpeg", width=250)
-    st.markdown("**UPI ID:** `dinesha.vishwanatha05-2@okaxis`")
-    st.write("1. Scan the QR code or copy the UPI ID to pay ₹49.")
-    st.write("2. Enter your 12-digit UTR (Transaction ID) below to unlock.")
-    
-    # 2. The Verification Input
-    utr_input = st.text_input("Enter 12-Digit UTR Number:", max_chars=12)
-    
-    if st.button("Verify Payment & Unlock"):
-        if len(utr_input) == 12 and utr_input.isdigit():
-            
-            # --- SUPABASE DATABASE CHECK ---
-            try:
-                # Connect to Supabase
-                supabase_url = st.secrets["SUPABASE_URL"]
-                supabase_key = st.secrets["SUPABASE_KEY"]
-                supabase: Client = create_client(supabase_url, supabase_key)
-                
-                # Check if UTR is already in the database
-                response = supabase.table("claimed_utrs").select("*").eq("utr_number", utr_input).execute()
-                
-                if len(response.data) > 0:
-                    # UTR FOUND: It's a duplicate! Block access.
-                    st.error("⚠️ This Transaction ID has already been used. Please enter a new valid UTR.")
-                else:
-                    # UTR NOT FOUND: It's new! Save it and unlock.
-                    supabase.table("claimed_utrs").insert({"utr_number": utr_input}).execute()
-                    st.session_state.premium_unlocked = True
-                    st.rerun() # Refresh the UI to show the uploader
+    # 1. Hide the aggressive payment UI inside a neat dropdown expander
+    with st.expander("🔓 Click here to unlock Premium Visual Analysis (Fee: ₹49)"):
+        st.info("Upload a photo of your joint or a medical report for deep visual analysis and tailored dietary matching.")
+        
+        # Display the QR Code inside the expander
+        st.image("QRCODE.jpeg", width=250)
+        st.markdown("**UPI ID:** `dinesha.vishwanatha05-2@okaxis`")
+        st.write("1. Scan the QR code or copy the UPI ID to pay ₹49.")
+        st.write("2. Enter your 12-digit UTR (Transaction ID) below to unlock.")
+        
+        # The Verification Input
+        utr_input = st.text_input("Enter 12-Digit UTR Number:", max_chars=12)
+        
+        if st.button("Verify Payment & Unlock"):
+            if len(utr_input) == 12 and utr_input.isdigit():
+                # --- SUPABASE DATABASE CHECK ---
+                try:
+                    # Connect to Supabase
+                    supabase_url = st.secrets["SUPABASE_URL"]
+                    supabase_key = st.secrets["SUPABASE_KEY"]
+                    supabase: Client = create_client(supabase_url, supabase_key)
                     
-            except Exception as e:
-                st.error("Database connection error. Please try again or contact support.")
-        else:
-            st.error("❌ Please enter a valid 12-digit UTR number.")
+                    # Check if UTR is already in the database
+                    response = supabase.table("claimed_utrs").select("*").eq("utr_number", utr_input).execute()
+                    
+                    if len(response.data) > 0:
+                        st.error("⚠️ This Transaction ID has already been used. Please enter a new valid UTR.")
+                    else:
+                        # Save it and unlock
+                        supabase.table("claimed_utrs").insert({"utr_number": utr_input}).execute()
+                        st.session_state.premium_unlocked = True
+                        st.rerun() # Refresh the UI to show the uploader
+                        
+                except Exception as e:
+                    st.error("Database connection error. Please try again or contact support.")
+            else:
+                st.error("❌ Please enter a valid 12-digit UTR number.")
 
 else:
-    # 3. Premium Unlocked - Show File Uploader
+    # 3. Premium Unlocked - Show File Uploader directly on the main page
     st.success("✅ Payment Verified! Premium Features Unlocked.")
     uploaded_file = st.file_uploader("Upload your medical report or joint image here:", type=["png", "jpg", "jpeg"])
     
