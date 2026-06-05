@@ -57,7 +57,7 @@ if clinic_mode == "Ayurvedic (Achala Digital Vaidya)":
     brand_caption = '"Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain, inspired by Shri Rajiv Dixit Ji."'
     
     # 🚨 NEW LETTERHEAD VARIABLES
-    pdf_hospital_name = "Achala Enterprises"
+    pdf_hospital_name = "Achala Digital Vaidya"
     pdf_sub_header = "Digital Vaidya • Advanced Visual Analysis Report"
     pdf_footer_text = "Guided by the Ayurvedic principles of Shri Rajiv Dixit Ji."
     
