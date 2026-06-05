@@ -176,39 +176,40 @@ st.markdown(
 # Add this to your imports at the very top of app.py
 from supabase import create_client, Client
 
-# --- PREMIUM FEATURE UTR VALIDATION ---
+# 1. Inject custom CSS to make the expander pop (Keep this perfectly aligned to the left wall)
+st.markdown(
+    """
+    <style>
+    /* Target the expander header */
+    [data-testid="stExpander"] details summary {
+        background-color: #1a2a40;
+        border: 2px solid #4da6ff;
+        border-radius: 8px;
+        color: #ffffff;
+        font-weight: bold;
+        padding: 10px;
+    }
+    /* Add a glowing effect when the user hovers over it */
+    [data-testid="stExpander"] details summary:hover {
+        border-color: #00e676;
+        box-shadow: 0px 0px 10px rgba(0, 230, 118, 0.4);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Check if premium is already unlocked in this session
 if "premium_unlocked" not in st.session_state:
     st.session_state.premium_unlocked = False
 
 if not st.session_state.premium_unlocked:
-    # 1. Inject custom CSS to make the expander pop
-        st.markdown(
-            """
-            <style>
-            /* Target the expander header */
-            [data-testid="stExpander"] details summary {
-                background-color: #1a2a40; /* Deep premium blue background */
-                border: 2px solid #4da6ff; /* Bright blue border */
-                border-radius: 8px;
-                color: #ffffff;
-                font-weight: bold;
-                padding: 10px;
-            }
-            /* Add a glowing effect when the user hovers over it */
-            [data-testid="stExpander"] details summary:hover {
-                border-color: #00e676; /* Changes to success green on hover */
-                box-shadow: 0px 0px 10px rgba(0, 230, 118, 0.4);
-            }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-    # 1. Hide the aggressive payment UI inside a neat dropdown expander
+    
+    # 2. The Expander (Notice the 4 spaces before 'with')
     with st.expander("🔓 Click here to unlock Premium Visual Analysis (Fee: ₹49)"):
         st.info("Upload a photo of your joint or a medical report for deep visual analysis and tailored dietary matching.")
         
-        # Display the QR Code inside the expander
+        # Display the QR Code inside the expander (Notice the 8 spaces before 'st.image')
         st.image("QRCODE.jpeg", width=250)
         st.markdown("**UPI ID:** `dinesha.vishwanatha05-2@okaxis`")
         st.write("1. Scan the QR code or copy the UPI ID to pay ₹49.")
