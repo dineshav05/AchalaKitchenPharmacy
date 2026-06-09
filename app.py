@@ -418,7 +418,7 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 else:
                     st.error("⚠️ Error generating the PDF report. Please try again.")
             
-            # Add assistant response to chat history
+        # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": ai_response})
         
         # Save the fingerprint so it can't be uploaded again
@@ -426,6 +426,6 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
         
         # ADD THIS: Force the file uploader to clear itself for the next run
         st.session_state.uploader_key += 1
-            
-        except Exception as e: # --- THIS IS THE RESTORED EXCEPT BLOCK! ---
-            st.error("Error communicating with the AI Engine. Please check your API key.")
+        
+    except Exception as e: # <-- PULL THIS BACK TO THE LEFT!
+        st.error("Error communicating with the AI Engine. Please check your API key.")
