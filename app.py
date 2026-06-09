@@ -155,6 +155,7 @@ if "processed_files" not in st.session_state:
 # 1. Initialize states for payment tracking
 if "premium_unlocked" not in st.session_state:
     st.session_state.premium_unlocked = False #True for no validate
+
 if "show_qr" not in st.session_state:
     st.session_state.show_qr = False #True for no validate
 
@@ -203,6 +204,10 @@ st.markdown(
 if "premium_unlocked" not in st.session_state:
     st.session_state.premium_unlocked = False
 
+# ADD THIS: Track the file uploader resets
+if "uploader_key" not in st.session_state:
+    st.session_state.uploader_key = 0
+
 if not st.session_state.premium_unlocked:
     
     # 2. The Expander (Notice the 4 spaces before 'with')
@@ -246,7 +251,12 @@ if not st.session_state.premium_unlocked:
 else:
     # 3. Premium Unlocked - Show File Uploader directly on the main page
     st.success("✅ Payment Verified! Premium Features Unlocked.")
-    uploaded_file = st.file_uploader("Upload your medical report or joint image here:", type=["png", "jpg", "jpeg"])
+    # ADD the key= parameter to your existing uploader
+    uploaded_file = st.file_uploader(
+    "Upload your medical report or joint image here:", 
+    type=["png", "jpg", "jpeg"],
+    key=f"uploader_{st.session_state.uploader_key}"
+    )
     
     if uploaded_file is not None:
         import hashlib
@@ -408,8 +418,14 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 else:
                     st.error("⚠️ Error generating the PDF report. Please try again.")
             
-            # Save assistant's reply to history
-            st.session_state.messages.append({"role": "assistant", "content": ai_response})
+            # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": ai_response})
+        
+        # Save the fingerprint so it can't be uploaded again
+        st.session_state.analyzed_files.append(file_hash)
+        
+        # ADD THIS: Force the file uploader to clear itself for the next run
+        st.session_state.uploader_key += 1
             
         except Exception as e: # --- THIS IS THE RESTORED EXCEPT BLOCK! ---
             st.error("Error communicating with the AI Engine. Please check your API key.")
