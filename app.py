@@ -216,7 +216,7 @@ if not st.session_state.premium_unlocked:
         
         # Display the QR Code inside the expander (Notice the 8 spaces before 'st.image')
         st.image("QRCODE.jpeg", width=250)
-        st.markdown("**UPI ID:** `dinesha.vishwanatha05-2@okaxis`")
+        st.markdown("**UPI ID:** `0798141a0290441.bqr@kotak`")
         st.write("1. Scan the QR code or copy the UPI ID to pay ₹49.")
         st.write("2. Enter your 12-digit UTR (Transaction ID) below to unlock.")
         
