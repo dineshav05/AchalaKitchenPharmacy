@@ -185,7 +185,7 @@ if not st.session_state.premium_unlocked:
     st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and get a downloadable PDF. (Fee: ₹49)")
     
     # 2. The Dynamic Language Warning (Highlights their current selection)
-    st.warning(f"⚠️ **Important:** Your report will be generated in **{selected_language}**. If you need a different language (like Hindi, Kannada and other regional languages), please select it from the left menu *before* paying!")
+    st.warning(f"⚠️ **Important:** Your report will be generated in **{selected_language}**. If you need a different language (like Hindi, Kannada and other regional languages), please select it from the left menu by clicking >> sign *before* paying!")
     
     # Initialize the Razorpay Client safely using .get()
     try:
