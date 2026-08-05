@@ -35,23 +35,86 @@ def get_base64_image(image_path):
 logo_base64 = get_base64_image("Achala_Digital_Vaidya.png")
 allopathic_logo_base64 = get_base64_image("Allopatic_Clinic.png")
 
-# --- Sidebar Settings ---
-with st.sidebar:
-    st.title("⚙️ Preferences")
-    selected_language = st.selectbox(
-        "🌐 Choose Report Language:",
-        ["English", "Hindi (हिंदी)", "Kannada (ಕನ್ನಡ)", "Tamil (தமிழ்)", "Telugu (తెలుగు)", "Marathi (मराठी)", "Gujarati (ગુજરાતી)", "Bengali (বাংলা)", "Punjabi (ਪੰਜਾਬੀ)", "Malayalam (മലയാളം)"]
-    )
-    st.info(f"The Digital Vaidya & Clinical Translator will automatically analyze your reports and reply in **{selected_language}**.")
+# ---------------------------------------------------------
+# UNIFIED ROUTING & LANDING PAGE LOGIC (NO SIDEBAR)
+# ---------------------------------------------------------
 
+# 1. Initialize memory states so the app remembers user choices
+if "clinic_mode" not in st.session_state:
+    st.session_state.clinic_mode = None
+if "report_language" not in st.session_state:
+    st.session_state.report_language = "English"
 
-# --- CLINIC ADMINISTRATOR SETTINGS ---
-with st.sidebar:
-    st.markdown("### ⚙️ Clinic Setup")
-    clinic_mode = st.radio(
-        "Select Operating Mode:",
-        ["Ayurvedic (Achala Digital Vaidya)", "Allopathic (Clinical Translator)"]
-    )
+# 2. Render the Main Landing Page if no mode is selected
+if st.session_state.clinic_mode is None:
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #666; font-weight: bold; letter-spacing: 1px; font-size: 12px;'>ACHALA ECOSYSTEM</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-bottom: 30px;'>Digital Clinic Workspace</h1>", unsafe_allow_html=True)
+    
+    # Center the layout for a clean desktop and mobile view
+    col1, col2, col3 = st.columns([1, 10, 1])
+    
+    with col2:
+        # --- STEP 1: Language Selection ---
+        st.markdown("### 🌐 Step 1: Choose Report Language")
+        st.info("The AI will automatically analyze your medical reports and reply in the language selected below.")
+        
+        languages = ["English", "Hindi", "Kannada", "Telugu", "Tamil", "Marathi", "Malayalam"]
+        
+        # Save the language directly into session state
+        st.session_state.report_language = st.selectbox(
+            "Select Language:",
+            languages,
+            index=languages.index(st.session_state.report_language),
+            label_visibility="collapsed"
+        )
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # --- STEP 2: Clinic Selection (Flashcards) ---
+        st.markdown("### 🏥 Step 2: Select Operating Mode")
+        card_col1, card_col2 = st.columns(2)
+        
+        # Flashcard 1: Ayurvedic
+        with card_col1:
+            with st.container(border=True):
+                st.markdown("#### 🌿 Achala Digital Vaidya")
+                st.write("*Kitchen Pharmacy AI*")
+                st.write("Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide.")
+                st.write("") 
+                if st.button("Launch Ayurvedic Clinic", key="btn_ayurveda", use_container_width=True):
+                    st.session_state.clinic_mode = "Ayurvedic"
+                    st.rerun()
+                    
+        # Flashcard 2: Allopathic
+        with card_col2:
+            with st.container(border=True):
+                st.markdown("#### 🩺 Clinical Translator")
+                st.write("*Evidence-Based AI*")
+                st.write("Empowering patients through clear, evidence-based medical translations.")
+                st.write("")
+                if st.button("Launch Allopathic Clinic", key="btn_allopathic", use_container_width=True):
+                    st.session_state.clinic_mode = "Allopathic"
+                    st.rerun()
+                    
+    # Stop the rest of the chat UI from loading until a card is clicked
+    st.stop()
+
+# 3. Active Chat Header (Replaces the Sidebar Navigation)
+# If the user is inside a clinic, show them their current settings and a back button
+if st.session_state.clinic_mode is not None:
+    nav_col1, nav_col2 = st.columns([3, 1])
+    with nav_col1:
+        st.markdown(f"<span style='color:#666; font-size: 14px;'>**Mode:** {st.session_state.clinic_mode} &nbsp;|&nbsp; **Language:** {st.session_state.report_language}</span>", unsafe_allow_html=True)
+    with nav_col2:
+        if st.button("⚙️ Settings", use_container_width=True):
+            st.session_state.clinic_mode = None
+            st.rerun()
+    st.write("---")
+    
+    # IMPORTANT: Map the session state to your existing language variable 
+    # so the rest of your code doesn't break!
+    selected_language = st.session_state.report_language
 
 # 1. Define UI Variables and AI Brain Based on Clinic Setup
 if clinic_mode == "Ayurvedic (Achala Digital Vaidya)":
