@@ -342,93 +342,98 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
 
     # 3. Generate Assistant Response
     with st.chat_message("assistant"):
-        try: 
-            # Create a temporary copy of the chat history
-            api_messages = st.session_state.messages.copy()
-            
-            # Inject a strict system command telling the AI to use the user's selected language
-            api_messages.append({
-                "role": "system", 
-                "content": f"CRITICAL TRANSLATION RULE: You MUST generate your ENTIRE response, including the report analysis, headings, and Ayurvedic recommendations, strictly in {selected_language}. Ensure medical terms are translated beautifully so the common man can understand."
-            })
-            
-            # Call the AI Engine
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=api_messages,
-                temperature=0.6,
-            )
-            ai_response = response.choices[0].message.content
-            
-            if uploaded_file is not None:
-                # Display the premium letterhead in the UI
-                display_letterhead_report(ai_response, current_logo)
+        # --- UX FIX: Added a visual spinner so the app doesn't look frozen ---
+        with st.spinner("Consulting the AI Engine... Please wait a few seconds."):
+            try: 
+                # Create a temporary copy of the chat history
+                api_messages = st.session_state.messages.copy()
                 
-                # Build the printable PDF version
-                structured_html_content = markdown.markdown(ai_response, extensions=['extra', 'sane_lists', 'nl2br'])
+                # Inject a strict system command telling the AI to use the user's selected language
+                api_messages.append({
+                    "role": "system", 
+                    "content": f"CRITICAL TRANSLATION RULE: You MUST generate your ENTIRE response, including the report analysis, headings, and Ayurvedic recommendations, strictly in {selected_language}. Ensure medical terms are translated beautifully so the common man can understand."
+                })
                 
-                report_html = f"""
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <style>
-                        @page {{ size: a4 portrait; margin: 2cm; }}
-                        body {{ font-family: 'Helvetica', sans-serif; color: #2b2b2b; font-size: 14px; line-height: 1.6; }}
-                        .content-section h3 {{ color: #0f4c5c; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; margin-top: 25px; font-size: 18px; }}
-                        .content-section ul {{ padding-left: 15px; }}
-                        .content-section li {{ margin-bottom: 8px; }}
-                        .footer-section {{ text-align: center; font-size: 11px; color: #888; border-top: 1px solid #e0e0e0; padding-top: 15px; margin-top: 40px; }}
-                    </style>
-                </head>
-                <body>
-                    <table style="width: 100%; border-bottom: 2px solid #0f4c5c; padding-bottom: 10px; margin-bottom: 20px;">
-                        <tr>
-                            <td style="width: 15%; vertical-align: middle;">
-                                <img src="data:image/png;base64,{current_logo}" width="70">
-                            </td>
-                            <td style="width: 85%; vertical-align: middle; text-align: left;">
-                                <h2 style="margin: 0; color: #0f4c5c; font-size: 26px; letter-spacing: 0.5px;">{pdf_hospital_name}</h2>
-                                <p style="margin: 3px 0 0 0; color: #666; font-weight: bold; font-size: 13px; text-transform: uppercase;">{pdf_sub_header}</p>
-                            </td>
-                        </tr>
-                    </table>
+                # Call the AI Engine
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=api_messages,
+                    temperature=0.6,
+                )
+                ai_response = response.choices[0].message.content
+                
+                if uploaded_file is not None:
+                    # Display the premium letterhead in the UI
+                    display_letterhead_report(ai_response, current_logo)
                     
-                    <div class="content-section">
-                        {structured_html_content}
-                    </div>
+                    # Build the printable PDF version
+                    structured_html_content = markdown.markdown(ai_response, extensions=['extra', 'sane_lists', 'nl2br'])
                     
-                    <div class="footer-section">
-                        {pdf_footer_text}
-                    </div>
-                </body>
-                </html>
-                """
-                
-                # Generate the PDF
-                pdf_buffer = BytesIO()
-                pisa_status = pisa.CreatePDF(report_html, dest=pdf_buffer)
-                
-                # Display the Download Button
-                if not pisa_status.err:
-                    st.download_button(
-                        label="📄 Download Official PDF Report",
-                        data=pdf_buffer.getvalue(),
-                        file_name="Medical_Analysis_Report.pdf",
-                        mime="application/pdf",
-                        type="primary"
-                    )
+                    report_html = f"""
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <style>
+                            @page {{ size: a4 portrait; margin: 2cm; }}
+                            body {{ font-family: 'Helvetica', sans-serif; color: #2b2b2b; font-size: 14px; line-height: 1.6; }}
+                            .content-section h3 {{ color: #0f4c5c; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; margin-top: 25px; font-size: 18px; }}
+                            .content-section ul {{ padding-left: 15px; }}
+                            .content-section li {{ margin-bottom: 8px; }}
+                            .footer-section {{ text-align: center; font-size: 11px; color: #888; border-top: 1px solid #e0e0e0; padding-top: 15px; margin-top: 40px; }}
+                        </style>
+                    </head>
+                    <body>
+                        <table style="width: 100%; border-bottom: 2px solid #0f4c5c; padding-bottom: 10px; margin-bottom: 20px;">
+                            <tr>
+                                <td style="width: 15%; vertical-align: middle;">
+                                    <img src="data:image/png;base64,{current_logo}" width="70">
+                                </td>
+                                <td style="width: 85%; vertical-align: middle; text-align: left;">
+                                    <h2 style="margin: 0; color: #0f4c5c; font-size: 26px; letter-spacing: 0.5px;">{pdf_hospital_name}</h2>
+                                    <p style="margin: 3px 0 0 0; color: #666; font-weight: bold; font-size: 13px; text-transform: uppercase;">{pdf_sub_header}</p>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <div class="content-section">
+                            {structured_html_content}
+                        </div>
+                        
+                        <div class="footer-section">
+                            {pdf_footer_text}
+                        </div>
+                    </body>
+                    </html>
+                    """
+                    
+                    # Generate the PDF
+                    pdf_buffer = BytesIO()
+                    pisa_status = pisa.CreatePDF(report_html, dest=pdf_buffer)
+                    
+                    # Display the Download Button
+                    if not pisa_status.err:
+                        st.download_button(
+                            label="📄 Download Official PDF Report",
+                            data=pdf_buffer.getvalue(),
+                            file_name="Medical_Analysis_Report.pdf",
+                            mime="application/pdf",
+                            type="primary"
+                        )
+                    else:
+                        st.error("⚠️ Error generating the PDF report. Please try again.")
                 else:
-                    st.error("⚠️ Error generating the PDF report. Please try again.")
-            
-            # Add assistant response to chat history
-            st.session_state.messages.append({"role": "assistant", "content": ai_response})
-            
-            if uploaded_file is not None:
-                # Save the fingerprint so it can't be uploaded again
-                st.session_state.analyzed_files.append(hashlib.md5(uploaded_file.getvalue()).hexdigest())
+                    # --- BUG FIX: Instantly print the standard text to the screen if no file is uploaded ---
+                    st.markdown(ai_response)
                 
-                # Force the file uploader to clear itself for the next run
-                st.session_state.uploader_key += 1
-            
-        except Exception as e: 
-            st.error(f"Error communicating with the AI Engine. Please try again. ({str(e)})")
+                # Add assistant response to chat history memory
+                st.session_state.messages.append({"role": "assistant", "content": ai_response})
+                
+                if uploaded_file is not None:
+                    # Save the fingerprint so it can't be uploaded again
+                    st.session_state.analyzed_files.append(hashlib.md5(uploaded_file.getvalue()).hexdigest())
+                    
+                    # Force the file uploader to clear itself for the next run
+                    st.session_state.uploader_key += 1
+                
+            except Exception as e: 
+                st.error(f"Error communicating with the AI Engine. Please try again. ({str(e)})")
