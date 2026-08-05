@@ -343,7 +343,7 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
     # 3. Generate Assistant Response
     with st.chat_message("assistant"):
         # --- UX FIX: Added a visual spinner so the app doesn't look frozen ---
-        with st.spinner("Consulting the AI Engine... Please wait a few seconds."):
+        with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
             try: 
                 # Create a temporary copy of the chat history
                 api_messages = st.session_state.messages.copy()
@@ -436,4 +436,4 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     st.session_state.uploader_key += 1
                 
             except Exception as e: 
-                st.error(f"Error communicating with the AI Engine. Please try again. ({str(e)})")
+                st.error(f"Error communicating with the Achala Intelligence Engine. Please try again. ({str(e)})")
