@@ -1,5 +1,6 @@
-import razorpay
 import streamlit as st
+import requests
+from requests.auth import HTTPBasicAuth
 from PIL import Image
 from openai import OpenAI
 import base64
@@ -9,29 +10,43 @@ from io import BytesIO
 from xhtml2pdf import pisa
 from supabase import create_client, Client
 
-# 1. Initialize Razorpay Client securely
-razorpay_client = razorpay.Client(
-    auth=(st.secrets["rzp_live_TM95VSFW3eN4OT"], st.secrets["GZRL3p0UvJWKWKEsmtEgoC2U"])
-)
-
-# 2. Function to generate a ₹49 order
-def create_payment_order(receipt_id):
-    order_data = {
-        "amount": 4900,  # ₹49.00 in paise
+# ---------------------------------------------------------
+# RAZORPAY REST API (Bypasses library dependency issues)
+# ---------------------------------------------------------
+def create_payment_link(receipt_id, customer_name="Patient"):
+    url = "https://api.razorpay.com/v1/payment_links"
+    payload = {
+        "amount": 4900,
         "currency": "INR",
-        "receipt": receipt_id,
-        "payment_capture": 1 # Automatically capture the payment
+        "accept_partial": False,
+        "description": "Achala Digital Vaidya - Report Analysis",
+        "reference_id": receipt_id,
+        "customer": {"name": customer_name},
+        "notify": {"sms": False, "email": False},
+        "reminder_enable": False,
+        "callback_url": "https://achala-digital-vaidya.streamlit.app/", 
+        "callback_method": "get"
     }
     try:
-        order = razorpay_client.order.create(data=order_data)
-        return order
+        response = requests.post(
+            url, 
+            json=payload, 
+            auth=HTTPBasicAuth(st.secrets["rzp_live_TM95VSFW3eN4OT"], st.secrets["GZRL3p0UvJWKWKEsmtEgoC2U"]),
+            timeout=10
+        )
+        if response.status_code == 200:
+            return response.json().get("short_url") 
+        else:
+            st.error(f"Razorpay API Error: {response.text}")
+            return None
     except Exception as e:
         st.error(f"Payment gateway error: {e}")
         return None
 
+
 st.set_page_config(
     page_title="Achala Digital Vaidya | Clinical & Ayurvedic AI",
-    page_icon="Achala_Digital_Vaidya_logo.png",  # You can use an emoji OR an image path like "Achala_Digital_Vaidya.png"
+    page_icon="Achala_Digital_Vaidya_logo.png",
     layout="centered",
     initial_sidebar_state="expanded"
 )
@@ -41,41 +56,35 @@ api_key = st.secrets.get("OPENAI_API_KEY")
 
 if not api_key:
     st.error("OpenAI API Key is missing. Please set it in Streamlit Secrets.")
-    st.stop() # Stops the code cleanly without a traceback
+    st.stop()
 
 # Initialize the client
 client = OpenAI(api_key=api_key)
 
 # --- Base64 Image Encoder ---
 def get_base64_image(image_path):
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode('utf-8')
+    try:
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode('utf-8')
+    except FileNotFoundError:
+        return "" # Prevents crash if images aren't uploaded to github yet
 
 # --- Encode Both Logos ---
 logo_base64 = get_base64_image("Achala_Digital_Vaidya.png")
 allopathic_logo_base64 = get_base64_image("Allopatic_Clinic.png")
 
-# ---------------------------------------------------------
-# UNIFIED ROUTING & LANDING PAGE LOGIC (NO SIDEBAR)
-# ---------------------------------------------------------
 
-# 1. Initialize memory states so the app remembers user choices
+# ---------------------------------------------------------
+# UNIFIED ROUTING & LANDING PAGE LOGIC
+# ---------------------------------------------------------
 if "clinic_mode" not in st.session_state:
     st.session_state.clinic_mode = None
 if "report_language" not in st.session_state:
     st.session_state.report_language = "English"
 
-# 2. Render the Main Landing Page if no mode is selected
-    # --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
-# ---------------------------------------------------------
-# CALLBACK FUNCTION
-# ---------------------------------------------------------
 def set_clinic_mode(mode):
     st.session_state.clinic_mode = mode
 
-# ---------------------------------------------------------
-# GLOBAL CSS INJECTION (Moved OUTSIDE the if statement!)
-# ---------------------------------------------------------
 st.markdown("""
     <style>
     .ecosystem-wrapper { display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }
@@ -99,10 +108,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 
-# --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
 if st.session_state.clinic_mode is None:
-    
-    # 1. Render Header 
     st.markdown("""
         <div class='ecosystem-wrapper'>
             <div class='ecosystem-header'>ACHALA ECOSYSTEM</div>
@@ -113,7 +119,6 @@ if st.session_state.clinic_mode is None:
     col1, col2, col3 = st.columns([1, 10, 1])
     
     with col2:
-        # --- STEP 1: Choose Report Language ---
         st.markdown("<h3 class='step-header'>🌐 Step 1: Choose Report Language</h3>", unsafe_allow_html=True)
         st.info("The AI will automatically analyze your medical reports and reply in the language selected below.")
         
@@ -126,13 +131,10 @@ if st.session_state.clinic_mode is None:
         )
         
         st.markdown("<br><br>", unsafe_allow_html=True)
-        
-        # --- STEP 2: Clinic Selection (Flashcards) ---
         st.markdown("<h3 class='step-header'>🏥 Step 2: Select Operating Mode</h3>", unsafe_allow_html=True)
         
         card_col1, card_col2 = st.columns(2)
         
-        # Flashcard 1: Ayurvedic Clinic
         with card_col1:
             st.markdown("""
                 <div class='vibrant-card-ayurveda'>
@@ -142,10 +144,8 @@ if st.session_state.clinic_mode is None:
                     <div class='card-description'>Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain.</div>
                 </div>
                 """, unsafe_allow_html=True)
-            
             st.button("Launch Ayurvedic Clinic", key="btn_ayurveda", use_container_width=True, type="primary", on_click=set_clinic_mode, args=("Ayurvedic",))
                     
-        # Flashcard 2: Allopathic Clinic
         with card_col2:
             st.markdown("""
                 <div class='vibrant-card-allopathic'>
@@ -155,14 +155,14 @@ if st.session_state.clinic_mode is None:
                     <div class='card-description'>Empowering patients through clear, evidence-based medical translations and clinical clarity.</div>
                 </div>
                 """, unsafe_allow_html=True)
-            
             st.button("Launch Allopathic Clinic", key="btn_allopathic", use_container_width=True, on_click=set_clinic_mode, args=("Allopathic",))
                     
-    # Stop the rest of the chat UI from loading until a card is clicked
     st.stop()
 
-# 3. Active Chat Header (Replaces the Sidebar Navigation)
-# If the user is inside a clinic, show them their current settings and a back button
+
+# ---------------------------------------------------------
+# ACTIVE CLINIC WORKSPACE
+# ---------------------------------------------------------
 if st.session_state.clinic_mode is not None:
     nav_col1, nav_col2 = st.columns([3, 1])
     with nav_col1:
@@ -173,27 +173,20 @@ if st.session_state.clinic_mode is not None:
             st.rerun()
     st.write("---")
     
-    # IMPORTANT: Map the session state to your existing language variable 
-    # so the rest of your code doesn't break!
     selected_language = st.session_state.report_language
 
-# 1. Define UI Variables and AI Brain Based on Clinic Setup
 if st.session_state.clinic_mode == "Ayurvedic":
-    current_logo = logo_base64 # Make sure this matches your actual logo variable!
+    current_logo = logo_base64
     brand_title = "Achala Digital Vaidya"
     brand_badge = "KITCHEN PHARMACY AI"
     brand_caption = '"Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain, inspired by Shri Rajiv Dixit Ji."'
-    
-    # LETTERHEAD VARIABLES
     pdf_hospital_name = "Achala Digital Vaidya"
     pdf_sub_header = "Digital Vaidya • Advanced Visual Analysis Report"
     pdf_footer_text = "Guided by the Ayurvedic principles of Shri Rajiv Dixit Ji."
-    
-    # The Ayurvedic Brain
     SYSTEM_PROMPT = """
     You are Rajiv Dixit AI, an expert consultant in Ayurveda and Vata-induced joint pain. Your goal is to help the common man reverse chronic back and joint pain using accessible, budget-friendly kitchen remedies.
     Follow these rules strictly:
-    1. Identify if the user's symptoms point to a Vata imbalance (e.g., cracking joints, long morning stiffness, shifting body pain).
+    1. Identify if the user's symptoms point to a Vata imbalance.
     2. Recommend affordable home remedies based on Rajiv Dixit's protocols (Parijat decoction, Chuna, Methi Dana).
     3. SAFETY GUARDRAIL: You MUST explicitly check if the user has a history of kidney stones or gallstones BEFORE recommending Chuna (Edible Limestone). If they answer yes, strictly forbid Chuna.
     4. Enforce foundational lifestyle rules: sit down while drinking water (sip by sip), completely eliminate refined oils.
@@ -202,29 +195,24 @@ if st.session_state.clinic_mode == "Ayurvedic":
     """
 
 elif st.session_state.clinic_mode == "Allopathic":
-    current_logo = allopathic_logo_base64 # Update if you have a different logo for this mode
+    current_logo = allopathic_logo_base64 
     brand_title = "Patient Education & Clinical Translator"
     brand_badge = "EVIDENCE-BASED AI"
     brand_caption = '"Empowering patients through clear, evidence-based medical translations and clinical clarity."'
-    
-    # LETTERHEAD VARIABLES
     pdf_hospital_name = "Clinical Translation Portal"
     pdf_sub_header = "Evidence-Based Medical Analysis Report"
     pdf_footer_text = "Disclaimer: This report is a simplified explanation of complex clinical findings for educational use."
-    
-    # The Allopathic / Orthopedic Brain (The Trojan Horse)
     SYSTEM_PROMPT = """
     You are a highly professional Clinical Translation Assistant working for an Orthopedic Hospital.
     Your sole job is to translate complex English medical reports, MRIs, and X-ray summaries into simple, easy-to-understand regional languages for the patient.
     Follow these rules strictly:
     1. STRICT RULE: DO NOT recommend alternative medicines, Ayurvedic herbs, or home remedies. 
     2. STRICT RULE: Always reinforce the doctor's prescribed treatment plan (e.g., Physiotherapy, Surgery, NSAIDs).
-    3. Break down complex medical jargon (like "osteophyte formation" or "joint space narrowing") into simple analogies.
+    3. Break down complex medical jargon into simple analogies.
     4. Keep the tone clinical, reassuring, and highly respectful of modern evidence-based medicine.
     5. NEVER use numbered lists (1, 2, 3...) for patient details. Use Markdown subheadings (e.g., ### Patient Information) and bullet points.
     """
 
-# 2. Inject the variables into a SINGLE dynamic HTML header
 dynamic_header_html = f"""
 <div style="display: flex; flex-direction: column; align-items: center; text-align: center; padding-bottom: 10px;">
     <img src="data:image/png;base64,{current_logo}" width="80" style="margin-bottom: 8px; border-radius: 50%;">
@@ -243,28 +231,19 @@ dynamic_header_html = f"""
 <hr style="opacity: 0.2; margin-bottom: 10px;">
 """
 
-# Render the dynamic header
 st.markdown(dynamic_header_html, unsafe_allow_html=True)
 
-# Initialize or force-sync the active System Prompt inside Session State
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 else:
-    # Forcefully update index 0 to match the current sidebar selection
     st.session_state.messages[0] = {"role": "system", "content": SYSTEM_PROMPT}
 
-# --- Render Chat History ---
 for message in st.session_state.messages:
-    # Skip drawing the system prompt on the screen
     if message["role"] == "system":
         continue
-
     with st.chat_message(message["role"]):
-        # 1. If it's a normal string (like the AI's response or a normal text chat)
         if isinstance(message["content"], str):
             st.markdown(message["content"])
-            
-        # 2. If it is a complex payload list (like when the user uploads an image)
         elif isinstance(message["content"], list):
             for item in message["content"]:
                 if item["type"] == "text":
@@ -272,9 +251,6 @@ for message in st.session_state.messages:
                 elif item["type"] == "image_url":
                     st.caption("📎 *Image/Report Attached*")
 
-# ---------------------------------------------------------
-# STATE INITIALIZATIONS
-# ---------------------------------------------------------
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = []
 if "analyzed_files" not in st.session_state:
@@ -302,90 +278,55 @@ st.markdown(
 
 
 # ---------------------------------------------------------
-# PREMIUM FEATURE: RAZORPAY + SUPABASE LEDGER
+# PREMIUM FEATURE: RAZORPAY URL REDIRECT & LOGGING
 # ---------------------------------------------------------
-if not st.session_state.premium_unlocked:
-    # 1. The Core Value Proposition
-    st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and get a downloadable PDF. (Fee: ₹49)")
+
+# 1. Listen for Razorpay returning the user to the app after payment
+query_params = st.query_params
+payment_status = query_params.get("razorpay_payment_link_status")
+payment_id = query_params.get("razorpay_payment_id")
+
+if payment_status == "paid":
+    st.session_state.premium_unlocked = True
     
-    # Initialize the Razorpay Client safely using .get()
-    try:
-        razorpay_client = razorpay.Client(
-            auth=(st.secrets.get("RAZORPAY_KEY_ID", ""), st.secrets.get("RAZORPAY_KEY_SECRET", ""))
-        )
-    except Exception:
-        st.error("Razorpay API keys missing in Secrets.")
+    # Securely log it to Supabase so it's on record
+    if payment_id and "ledger_logged" not in st.session_state:
+        try:
+            supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+            supabase.table("claimed_utrs").insert({
+                "utr_number": payment_id, 
+                "status": "PAID"
+            }).execute()
+            st.session_state.ledger_logged = True
+        except Exception:
+            pass # Fails silently without bothering the user
+
+
+if not st.session_state.premium_unlocked:
+    st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and get a downloadable PDF. (Fee: ₹49)")
     
     # --- UI STATE 1: GENERATE LINK ---
     if st.session_state.payment_step == "start":
         if st.button("Generate Secure Payment Link", type="primary", use_container_width=True):
             with st.spinner("Connecting to secure payment gateway..."):
-                try:
-                    payment_data = {
-                        "amount": 4900, # 4900 paise = ₹49
-                        "currency": "INR",
-                        "description": "Achala Digital Vaidya - Premium Analysis",
-                        "customer": {"name": "Achala User", "email": "user@achaladigital.com"},
-                        "notify": {"sms": False, "email": False},
-                        "reminder_enable": False
-                    }
-                    payment_link = razorpay_client.payment_link.create(payment_data)
-                    
-                    # Save to memory and move to next step
-                    st.session_state.razorpay_link_id = payment_link['id']
-                    st.session_state.razorpay_url = payment_link['short_url']
+                checkout_url = create_payment_link(receipt_id="ACHALA_ORDER_001")
+                
+                if checkout_url:
+                    st.session_state.razorpay_url = checkout_url
                     st.session_state.payment_step = "pending"
                     st.rerun()
-                except Exception as e:
-                    st.error("⚠️ Gateway temporarily unavailable. Please check your Razorpay keys and try again.")
 
-    # --- UI STATE 2: WAITING FOR VERIFICATION ---
+    # --- UI STATE 2: WAITING FOR USER TO CLICK ---
     elif st.session_state.payment_step == "pending":
-        st.warning("⏳ **Payment link generated!** Follow the 2 steps below:")
+        st.warning("⏳ **Payment link generated!** Click the button below to pay securely.")
         
-        # HTML button for opening payment gateway in a new tab
-        st.markdown(
-            f"""
-            <div style='text-align:center; padding: 15px;'>
-                <a href='{st.session_state.razorpay_url}' target='_blank' 
-                   style='font-size: 18px; font-weight: bold; background-color: #007bff; color: white; 
-                          padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;'>
-                   1️⃣ Click Here to Pay ₹49 (Opens in new tab)
-                </a>
-            </div>
-            """, 
-            unsafe_allow_html=True
-        )
+        # Native Streamlit Link Button for smooth redirect
+        st.link_button("Proceed to Pay ₹49", st.session_state.razorpay_url, type="primary", use_container_width=True)
+        st.info("After completing the payment on Razorpay, you will automatically be redirected back here to unlock your analysis.")
         
-        st.write("---")
-        st.markdown("#### 2️⃣ Did you complete the payment?")
-        st.write("Once your UPI app says successful, click the verification button below to unlock your report.")
-        
-        # Verification check
-        if st.button("✅ Yes, I have paid. Verify my transaction.", type="primary", use_container_width=True):
-            with st.spinner("Checking transaction status with the bank..."):
-                try:
-                    # Ask Razorpay for the status
-                    link_details = razorpay_client.payment_link.fetch(st.session_state.razorpay_link_id)
-                    
-                    if link_details['status'] == 'paid':
-                        # SILENT SUPABASE LEDGER LOGGING
-                        try:
-                            supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
-                            supabase.table("claimed_utrs").insert({
-                                "utr_number": link_details['id'], 
-                                "status": "PAID"
-                            }).execute()
-                        except Exception as db_error:
-                            pass # Do not block the user if the ledger fails
-                        
-                        st.session_state.premium_unlocked = True
-                        st.session_state.payment_step = "success"
-                        st.rerun()
-                    else:
-                        st.error("⚠️ We haven't received the payment yet. If money was deducted, it may take 30-60 seconds to reflect. Please wait a moment and click verify again.")
-                except Exception as e:
-                    st.error("Could not reach the payment server. Please try verifying again.")
+        if st.button("Cancel"):
+            st.session_state.payment_step = "start"
+            st.rerun()
 
 # ---------------------------------------------------------
 # STATE 3: PREMIUM UNLOCKED & FILE UPLOADER
@@ -393,7 +334,6 @@ if not st.session_state.premium_unlocked:
 else:
     st.success("✅ Payment Verified! Premium Features Unlocked.")
     
-    # Auto-clearing uploader using the dynamic key
     uploaded_file = st.file_uploader(
         "Upload your medical report or joint image here:", 
         type=["png", "jpg", "jpeg"],
@@ -402,11 +342,9 @@ else:
     
     if uploaded_file is not None:
         file_hash = hashlib.md5(uploaded_file.getvalue()).hexdigest()
-        
-        # Check if this exact file has already been processed by the AI
         if file_hash in st.session_state.analyzed_files:
             st.warning("⚠️ Kindly upload a report or image only once. This is a duplicate.")
-            uploaded_file = None # Nullify it so it doesn't process again
+            uploaded_file = None 
         else:
             st.success("✅ Image loaded successfully! Please type your symptoms in the chat box below and hit Send to begin.")
 
@@ -414,9 +352,7 @@ else:
 def encode_image(upload):
     return base64.b64encode(upload.getvalue()).decode('utf-8')
 
-
 def display_letterhead_report(ai_content, logo_base64_string):
-    """Wraps the AI text in a beautiful Achala Enterprises digital letterhead."""
     letterhead_html = f"""
 <div style="border: 2px solid #0f4c5c; border-radius: 8px; padding: 25px; background-color: #ffffff; color: #2b2b2b; font-family: 'Arial', sans-serif; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); margin-top: 20px;">
     <div style="display: flex; align-items: center; border-bottom: 2px solid #004d40; padding-bottom: 15px; margin-bottom: 20px;">
@@ -442,19 +378,15 @@ def display_letterhead_report(ai_content, logo_base64_string):
 # ---------------------------------------------------------
 if user_input := st.chat_input("Describe your pain or upload an image above..."):
     
-    # 1. Display user message and uploaded image
     with st.chat_message("user"):
         st.markdown(user_input)
         if uploaded_file:
             st.image(uploaded_file, width=250)
 
-    # 2. Prepare the message content for the AI
     message_content = [{"type": "text", "text": user_input}]
     
     if uploaded_file is not None:
         current_hash = hashlib.md5(uploaded_file.getvalue()).hexdigest()
-        
-        # SMART CACHE: Only attach the image to the AI payload if it's brand new
         if current_hash not in st.session_state.analyzed_files:
             base64_image = encode_image(uploaded_file)
             message_content.append({
@@ -462,24 +394,17 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
             })
 
-    # Save user's message to history
     st.session_state.messages.append({"role": "user", "content": message_content})
 
-    # 3. Generate Assistant Response
     with st.chat_message("assistant"):
-        # --- UX FIX: Added a visual spinner so the app doesn't look frozen ---
         with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
             try: 
-                # Create a temporary copy of the chat history
                 api_messages = st.session_state.messages.copy()
-                
-                # Inject a strict system command telling the AI to use the user's selected language
                 api_messages.append({
                     "role": "system", 
                     "content": f"CRITICAL TRANSLATION RULE: You MUST generate your ENTIRE response, including the report analysis, headings, and Ayurvedic recommendations, strictly in {selected_language}. Ensure medical terms are translated beautifully so the common man can understand."
                 })
                 
-                # Call the AI Engine
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=api_messages,
@@ -488,10 +413,7 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 ai_response = response.choices[0].message.content
                 
                 if uploaded_file is not None:
-                    # Display the premium letterhead in the UI
                     display_letterhead_report(ai_response, current_logo)
-                    
-                    # Build the printable PDF version
                     structured_html_content = markdown.markdown(ai_response, extensions=['extra', 'sane_lists', 'nl2br'])
                     
                     report_html = f"""
@@ -531,11 +453,9 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     </html>
                     """
                     
-                    # Generate the PDF
                     pdf_buffer = BytesIO()
                     pisa_status = pisa.CreatePDF(report_html, dest=pdf_buffer)
                     
-                    # Display the Download Button
                     if not pisa_status.err:
                         st.download_button(
                             label="📄 Download Official PDF Report",
@@ -547,17 +467,12 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     else:
                         st.error("⚠️ Error generating the PDF report. Please try again.")
                 else:
-                    # --- BUG FIX: Instantly print the standard text to the screen if no file is uploaded ---
                     st.markdown(ai_response)
                 
-                # Add assistant response to chat history memory
                 st.session_state.messages.append({"role": "assistant", "content": ai_response})
                 
                 if uploaded_file is not None:
-                    # Save the fingerprint so it can't be uploaded again
                     st.session_state.analyzed_files.append(hashlib.md5(uploaded_file.getvalue()).hexdigest())
-                    
-                    # Force the file uploader to clear itself for the next run
                     st.session_state.uploader_key += 1
                 
             except Exception as e: 
