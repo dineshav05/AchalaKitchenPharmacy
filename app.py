@@ -9,6 +9,13 @@ from io import BytesIO
 from xhtml2pdf import pisa
 from supabase import create_client, Client
 
+st.set_page_config(
+    page_title="Achala Digital Vaidya | Clinical & Ayurvedic AI",
+    page_icon="Achala_Digital_Vaidya_logo.png",  # You can use an emoji OR an image path like "Achala_Digital_Vaidya.png"
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
+
 # Use .get() so it doesn't crash if the key is missing
 api_key = st.secrets.get("OPENAI_API_KEY")
 
