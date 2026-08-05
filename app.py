@@ -97,6 +97,135 @@ if st.session_state.clinic_mode is None:
                     st.session_state.clinic_mode = "Allopathic"
                     st.rerun()
                     
+
+    # --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
+if st.session_state.clinic_mode is None:
+    # 1. Custom CSS Injection for Vibrant Look, Centered Text, and Animations
+    st.markdown("""
+        <style>
+        /* Center text and add background/rounded corners for main header */
+        .ecosystem-header {
+            text-align: center;
+            color: #666;
+            font-weight: bold;
+            letter-spacing: 1px;
+            font-size: 12px;
+            background-color: #f0f2f6;
+            padding: 10px;
+            border-radius: 15px;
+            width: fit-content;
+            margin: 0 auto;
+        }
+        .main-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        /* Step headers */
+        .step-header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        /* Vibrant Card Styling - Center Content, Color, Rounded, Hover Animation */
+        div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column;"] > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
+            border-radius: 20px !important;
+            padding: 25px !important;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        /* Hover animation and shadow on both cards */
+        div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column;"] > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:hover {
+            transform: translateY(-8px);
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        /* Specific card colors and icons */
+        .card-ayurveda {
+            background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%);
+            border: 2px solid #ffe89e;
+        }
+        .card-allopathic {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%);
+            border: 2px solid #b5d7ff;
+        }
+        .card-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        .card-title {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .card-subtitle {
+            color: #7f8c8d;
+            font-style: italic;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .card-description {
+            color: #34495e;
+            font-size: 15px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    # 2. Render Header (Custom background and rounded corners)
+    st.markdown("<p class='ecosystem-header'>ACHALA ECOSYSTEM</p>", unsafe_allow_html=True)
+    st.markdown("<h1 class='main-header'>Digital Clinic Workspace</h1>", unsafe_allow_html=True)
+    
+    # Center the entire onboarding section
+    col1, col2, col3 = st.columns([1, 10, 1])
+    
+    with col2:
+        # --- STEP 1: Choose Report Language ---
+        st.markdown("<h3 class='step-header'>🌐 Step 1: Choose Report Language</h3>", unsafe_allow_html=True)
+        st.info("The AI will automatically analyze your medical reports and reply in the language selected below.")
+        
+        languages = ["English", "Hindi", "Kannada", "Telugu", "Tamil", "Marathi", "Malayalam"]
+        st.session_state.report_language = st.selectbox(
+            "Select Language:",
+            languages,
+            index=languages.index(st.session_state.report_language),
+            label_visibility="collapsed"
+        )
+        
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        
+        # --- STEP 2: Clinic Selection (Flashcards) ---
+        st.markdown("<h3 class='step-header'>🏥 Step 2: Select Operating Mode</h3>", unsafe_allow_html=True)
+        
+        # Use HTML/CSS to inject the colorful, animated cards
+        card_col1, card_col2 = st.columns(2)
+        
+        # Flashcard 1: Ayurvedic Clinic
+        with card_col1:
+            st.markdown(f"""
+                <div class='card-ayurveda' style='border-radius: 20px; padding: 25px; border: 2px solid #ffe89e; text-align: center;'>
+                    <div class='card-icon'>🌿</div>
+                    <h3 class='card-title'>Achala Digital Vaidya</h3>
+                    <p class='card-subtitle'>Kitchen Pharmacy AI</p>
+                    <p class='card-description'>Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            if st.button("Launch Ayurvedic Clinic", key="btn_ayurveda", use_container_width=True, type="primary"):
+                st.session_state.clinic_mode = "Ayurvedic"
+                st.rerun()
+                    
+        # Flashcard 2: Allopathic Clinic
+        with card_col2:
+            st.markdown(f"""
+                <div class='card-allopathic' style='border-radius: 20px; padding: 25px; border: 2px solid #b5d7ff; text-align: center;'>
+                    <div class='card-icon'>🩺</div>
+                    <h3 class='card-title'>Clinical Translator</h3>
+                    <p class='card-subtitle'>Evidence-Based AI</p>
+                    <p class='card-description'>Empowering patients through clear, evidence-based medical translations and clinical clarity.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            if st.button("Launch Allopathic Clinic", key="btn_allopathic", use_container_width=True):
+                st.session_state.clinic_mode = "Allopathic"
+                st.rerun()
+                    
     # Stop the rest of the chat UI from loading until a card is clicked
     st.stop()
 
