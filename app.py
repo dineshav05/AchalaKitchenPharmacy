@@ -48,11 +48,13 @@ if "report_language" not in st.session_state:
 # 2. Render the Main Landing Page if no mode is selected
     # --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
 # --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
+# --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
 if st.session_state.clinic_mode is None:
-    # 1. Custom CSS Injection
+    # 1. NEW ROBUST CSS INJECTION
+    # We remove parent-dependent selectors to eliminate the render flash
     st.markdown("""
         <style>
-        /* Perfectly center the Achala Ecosystem header using Flexbox */
+        /* Center text and add background/rounded corners for main header */
         .ecosystem-wrapper {
             display: flex;
             justify-content: center;
@@ -78,47 +80,55 @@ if st.session_state.clinic_mode is None:
         }
 
         /* 
-           MAGIC TRICK: Style the entire Streamlit Column so the button is INSIDE the background!
-           We use the :has() selector to find the column containing our hidden markers.
+           NEW FLASH-PROOF CARDS
+           We use simple class names on our own HTML divs so they don't depend
+           on Streamlit re-calculating complex parent/child matches during re-runs.
         */
-        div[data-testid="column"]:has(.ayurveda-marker) {
+        .vibrant-card-ayurveda {
             background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%);
             border: 2px solid #ffe89e;
             border-radius: 20px;
-            padding: 20px; 
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            padding: 20px;
+            margin-bottom: 10px;
+            text-align: center;
+            transition: transform 0.2s ease;
         }
-        div[data-testid="column"]:has(.ayurveda-marker):hover {
-            transform: translateY(-6px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-
-        div[data-testid="column"]:has(.allopathic-marker) {
+        
+        .vibrant-card-allopathic {
             background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%);
             border: 2px solid #b5d7ff;
             border-radius: 20px;
             padding: 20px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 10px;
+            text-align: center;
+            transition: transform 0.2s ease;
         }
-        div[data-testid="column"]:has(.allopathic-marker):hover {
-            transform: translateY(-6px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+
+        /* Hover animation on both cards */
+        .vibrant-card-ayurveda:hover, .vibrant-card-allopathic:hover {
+            transform: translateY(-4px);
         }
 
         /* Clean text styling inside the cards */
-        .card-icon { font-size: 45px; text-align: center; margin-bottom: 10px; }
-        .card-title { color: #2c3e50; text-align: center; font-weight: bold; font-size: 20px; margin-bottom: 5px; }
-        .card-subtitle { color: #7f8c8d; text-align: center; font-style: italic; font-size: 14px; margin-bottom: 15px; }
-        .card-description { color: #34495e; text-align: center; font-size: 15px; margin-bottom: 15px; line-height: 1.5; }
+        .card-icon { font-size: 45px; margin-bottom: 10px; }
+        .card-title { color: #2c3e50; font-weight: bold; font-size: 20px; margin-bottom: 5px; }
+        .card-subtitle { color: #7f8c8d; font-style: italic; font-size: 14px; margin-bottom: 15px; }
+        .card-description { color: #34495e; font-size: 15px; line-height: 1.5; margin-bottom: 0px;}
         
         /* Round the Streamlit buttons to match the card aesthetics */
         button[kind="primary"], button[kind="secondary"] {
             border-radius: 12px !important;
+            margin-top: 0px !important;
+        }
+        
+        /* UX Fix: Standardize button spacing to sit clean under the description */
+        div[data-testid="column"] > div > div > div[data-testid="stVerticalBlock"] > div > div {
+             margin-top: 5px !important;
         }
         </style>
         """, unsafe_allow_html=True)
 
-    # 2. Render Header (Using the new flexbox wrapper)
+    # 2. Render Header 
     st.markdown("""
         <div class='ecosystem-wrapper'>
             <div class='ecosystem-header'>ACHALA ECOSYSTEM</div>
@@ -151,35 +161,47 @@ if st.session_state.clinic_mode is None:
         
         # Flashcard 1: Ayurvedic Clinic
         with card_col1:
-            # This hidden marker tells our CSS to apply the yellow background to this specific column
-            st.markdown("<span class='ayurveda-marker'></span>", unsafe_allow_html=True)
-            
+            # We generate the description part of the card as one single HTML block
             st.markdown("""
-                <div class='card-icon'>🌿</div>
-                <div class='card-title'>Achala Digital Vaidya</div>
-                <div class='card-subtitle'>Kitchen Pharmacy AI</div>
-                <div class='card-description'>Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain.</div>
+                <div class='vibrant-card-ayurveda'>
+                    <div class='card-icon'>🌿</div>
+                    <div class='card-title'>Achala Digital Vaidya</div>
+                    <div class='card-subtitle'>Kitchen Pharmacy AI</div>
+                    <div class='card-description'>Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain.</div>
+                </div>
                 """, unsafe_allow_html=True)
             
+            # The interactive Streamlit button sits clean below the HTML card
             if st.button("Launch Ayurvedic Clinic", key="btn_ayurveda", use_container_width=True, type="primary"):
-                st.session_state.clinic_mode = "Ayurvedic"
-                st.rerun()
+                # --- UX FIX: Wrap navigation in a spinner to mask the FOUC ---
+                with st.spinner("Navigating to Ayurvedic Clinic..."):
+                    st.session_state.clinic_mode = "Ayurvedic"
+                    # Add a tiny delay (0.2s) just to ensure spinner shows smoothly
+                    import time
+                    time.sleep(0.2)
+                    st.rerun()
                     
         # Flashcard 2: Allopathic Clinic
         with card_col2:
-            # This hidden marker tells our CSS to apply the blue background to this specific column
-            st.markdown("<span class='allopathic-marker'></span>", unsafe_allow_html=True)
-            
+            # We generate the description part of the card as one single HTML block
             st.markdown("""
-                <div class='card-icon'>🩺</div>
-                <div class='card-title'>Clinical Translator</div>
-                <div class='card-subtitle'>Evidence-Based AI</div>
-                <div class='card-description'>Empowering patients through clear, evidence-based medical translations and clinical clarity.</div>
+                <div class='vibrant-card-allopathic'>
+                    <div class='card-icon'>🩺</div>
+                    <div class='card-title'>Clinical Translator</div>
+                    <div class='card-subtitle'>Evidence-Based AI</div>
+                    <div class='card-description'>Empowering patients through clear, evidence-based medical translations and clinical clarity.</div>
+                </div>
                 """, unsafe_allow_html=True)
             
+            # The interactive Streamlit button sits clean below the HTML card
             if st.button("Launch Allopathic Clinic", key="btn_allopathic", use_container_width=True):
-                st.session_state.clinic_mode = "Allopathic"
-                st.rerun()
+                # --- UX FIX: Wrap navigation in a spinner to mask the FOUC ---
+                with st.spinner("Navigating to Clinical Translator..."):
+                    st.session_state.clinic_mode = "Allopathic"
+                    # Add a tiny delay (0.2s) just to ensure spinner shows smoothly
+                    import time
+                    time.sleep(0.2)
+                    st.rerun()
                     
     # Stop the rest of the chat UI from loading until a card is clicked
     st.stop()
