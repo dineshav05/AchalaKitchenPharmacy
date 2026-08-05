@@ -9,6 +9,26 @@ from io import BytesIO
 from xhtml2pdf import pisa
 from supabase import create_client, Client
 
+# 1. Initialize Razorpay Client securely
+razorpay_client = razorpay.Client(
+    auth=(st.secrets["rzp_live_TM95VSFW3eN4OT"], st.secrets["GZRL3p0UvJWKWKEsmtEgoC2U"])
+)
+
+# 2. Function to generate a ₹49 order
+def create_payment_order(receipt_id):
+    order_data = {
+        "amount": 4900,  # ₹49.00 in paise
+        "currency": "INR",
+        "receipt": receipt_id,
+        "payment_capture": 1 # Automatically capture the payment
+    }
+    try:
+        order = razorpay_client.order.create(data=order_data)
+        return order
+    except Exception as e:
+        st.error(f"Payment gateway error: {e}")
+        return None
+
 st.set_page_config(
     page_title="Achala Digital Vaidya | Clinical & Ayurvedic AI",
     page_icon="Achala_Digital_Vaidya_logo.png",  # You can use an emoji OR an image path like "Achala_Digital_Vaidya.png"
