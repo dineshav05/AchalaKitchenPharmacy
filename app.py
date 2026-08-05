@@ -1,3 +1,4 @@
+import razorpay
 import streamlit as st
 from PIL import Image
 from openai import OpenAI
@@ -6,7 +7,7 @@ import hashlib
 import markdown
 from io import BytesIO
 from xhtml2pdf import pisa
-
+from supabase import create_client, Client
 
 # Use .get() so it doesn't crash if the key is missing
 api_key = st.secrets.get("OPENAI_API_KEY")
@@ -18,16 +19,12 @@ if not api_key:
 # Initialize the client
 client = OpenAI(api_key=api_key)
 
-# 1. Initialize the OpenAI Client Safely
-# This tells the code to look for the key in Streamlit's secure dashboard, NOT in the code.
-
-# --- 3. Base64 Image Encoder ---
+# --- Base64 Image Encoder ---
 def get_base64_image(image_path):
-    import base64
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode('utf-8')
 
-# --- 4. Encode Both Logos ---
+# --- Encode Both Logos ---
 logo_base64 = get_base64_image("Achala_Digital_Vaidya.png")
 allopathic_logo_base64 = get_base64_image("Allopatic_Clinic.png")
 
@@ -56,12 +53,12 @@ if clinic_mode == "Ayurvedic (Achala Digital Vaidya)":
     brand_badge = "Kitchen Pharmacy AI"
     brand_caption = '"Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain, inspired by Shri Rajiv Dixit Ji."'
     
-    # 🚨 NEW LETTERHEAD VARIABLES
+    # LETTERHEAD VARIABLES
     pdf_hospital_name = "Achala Digital Vaidya"
     pdf_sub_header = "Digital Vaidya • Advanced Visual Analysis Report"
     pdf_footer_text = "Guided by the Ayurvedic principles of Shri Rajiv Dixit Ji."
     
-    # 🧠 The Ayurvedic Brain
+    # The Ayurvedic Brain
     SYSTEM_PROMPT = """
     You are Rajiv Dixit AI, an expert consultant in Ayurveda and Vata-induced joint pain. Your goal is to help the common man reverse chronic back and joint pain using accessible, budget-friendly kitchen remedies.
     Follow these rules strictly:
@@ -79,12 +76,12 @@ else:
     brand_badge = "Evidence-Based AI"
     brand_caption = '"Empowering patients through clear, evidence-based medical translations and clinical clarity."'
     
-    # 🚨 NEW LETTERHEAD VARIABLES
+    # LETTERHEAD VARIABLES
     pdf_hospital_name = "Clinical Translation Portal"
     pdf_sub_header = "Evidence-Based Medical Analysis Report"
     pdf_footer_text = "Disclaimer: This report is a simplified explanation of complex clinical findings for educational use."
     
-    # 🧠 The Allopathic / Orthopedic Brain (The Trojan Horse)
+    # The Allopathic / Orthopedic Brain (The Trojan Horse)
     SYSTEM_PROMPT = """
     You are a highly professional Clinical Translation Assistant working for an Orthopedic Hospital.
     Your sole job is to translate complex English medical reports, MRIs, and X-ray summaries into simple, easy-to-understand regional languages for the patient.
@@ -122,18 +119,16 @@ st.markdown(dynamic_header_html, unsafe_allow_html=True)
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 else:
-    # 🚨 THE BRAIN FIX: Forcefully update index 0 to match the current sidebar selection!
+    # Forcefully update index 0 to match the current sidebar selection
     st.session_state.messages[0] = {"role": "system", "content": SYSTEM_PROMPT}
 
 # --- Render Chat History ---
 for message in st.session_state.messages:
-    
-    # 🚨 THE FIX: Skip drawing the system prompt on the screen!
+    # Skip drawing the system prompt on the screen
     if message["role"] == "system":
         continue
 
     with st.chat_message(message["role"]):
-        
         # 1. If it's a normal string (like the AI's response or a normal text chat)
         if isinstance(message["content"], str):
             st.markdown(message["content"])
@@ -141,25 +136,25 @@ for message in st.session_state.messages:
         # 2. If it is a complex payload list (like when the user uploads an image)
         elif isinstance(message["content"], list):
             for item in message["content"]:
-                # Only print the text portion of the payload to the screen
                 if item["type"] == "text":
                     st.markdown(item["text"])
-                # We hide the massive base64 image string and just show a neat little tag
                 elif item["type"] == "image_url":
                     st.caption("📎 *Image/Report Attached*")
 
-# 1. Initialize a memory bank for processed files
+# ---------------------------------------------------------
+# STATE INITIALIZATIONS
+# ---------------------------------------------------------
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = []
-
-# 1. Initialize states for payment tracking
+if "analyzed_files" not in st.session_state:
+    st.session_state.analyzed_files = []
 if "premium_unlocked" not in st.session_state:
-    st.session_state.premium_unlocked = False #True for no validate
+    st.session_state.premium_unlocked = False
+if "payment_step" not in st.session_state:
+    st.session_state.payment_step = "start" 
+if "uploader_key" not in st.session_state:
+    st.session_state.uploader_key = 0
 
-if "show_qr" not in st.session_state:
-    st.session_state.show_qr = False #True for no validate
-
-# --- THE FIX: Initialize the variable as empty for free users ---
 uploaded_file = None
 
 st.markdown(
@@ -174,118 +169,126 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Add this to your imports at the very top of app.py
-from supabase import create_client, Client
 
-# 1. Inject custom CSS to make the expander pop (Keep this perfectly aligned to the left wall)
-st.markdown(
-    """
-    <style>
-    /* Target the expander header */
-    [data-testid="stExpander"] details summary {
-        background-color: #1a2a40;
-        border: 2px solid #4da6ff;
-        border-radius: 8px;
-        color: #ffffff;
-        font-weight: bold;
-        padding: 10px;
-    }
-    /* Add a glowing effect when the user hovers over it */
-    [data-testid="stExpander"] details summary:hover {
-        border-color: #00e676;
-        box-shadow: 0px 0px 10px rgba(0, 230, 118, 0.4);
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# Check if premium is already unlocked in this session
-if "premium_unlocked" not in st.session_state:
-    st.session_state.premium_unlocked = False
-
-# ADD THIS: Track the file uploader resets
-if "uploader_key" not in st.session_state:
-    st.session_state.uploader_key = 0
-
+# ---------------------------------------------------------
+# PREMIUM FEATURE: RAZORPAY + SUPABASE LEDGER
+# ---------------------------------------------------------
 if not st.session_state.premium_unlocked:
+    st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis. (Fee: ₹49)")
     
-    # 2. The Expander (Notice the 4 spaces before 'with')
-    with st.expander("🔓 Click here to unlock Premium Visual Analysis (Fee: ₹49)"):
-        st.info("Upload a photo of your joint or a medical report for deep visual analysis and tailored dietary matching.")
-        
-        # Display the QR Code inside the expander (Notice the 8 spaces before 'st.image')
-        st.image("QRCODE.jpeg", width=250)
-        st.markdown("**UPI ID:** `0798141a0290441.bqr@kotak`")
-        st.write("1. Scan the QR code or copy the UPI ID to pay ₹49.")
-        st.write("2. Enter your 12-digit UTR (Transaction ID) below to unlock.")
-        
-        # The Verification Input
-        utr_input = st.text_input("Enter 12-Digit UTR Number:", max_chars=12)
-        
-        if st.button("Verify Payment & Unlock"):
-            if len(utr_input) == 12 and utr_input.isdigit():
-                # --- SUPABASE DATABASE CHECK ---
+    # Initialize the Razorpay Client safely using .get()
+    try:
+        razorpay_client = razorpay.Client(
+            auth=(st.secrets.get("RAZORPAY_KEY_ID", ""), st.secrets.get("RAZORPAY_KEY_SECRET", ""))
+        )
+    except Exception:
+        st.error("Razorpay API keys missing in Secrets.")
+    
+    # --- UI STATE 1: GENERATE LINK ---
+    if st.session_state.payment_step == "start":
+        if st.button("Generate Secure Payment Link", type="primary", use_container_width=True):
+            with st.spinner("Connecting to secure payment gateway..."):
                 try:
-                    # Connect to Supabase
-                    supabase_url = st.secrets["SUPABASE_URL"]
-                    supabase_key = st.secrets["SUPABASE_KEY"]
-                    supabase: Client = create_client(supabase_url, supabase_key)
+                    payment_data = {
+                        "amount": 4900, # 4900 paise = ₹49
+                        "currency": "INR",
+                        "description": "Achala Digital Vaidya - Premium Analysis",
+                        "customer": {"name": "Achala User", "email": "user@achaladigital.com"},
+                        "notify": {"sms": False, "email": False},
+                        "reminder_enable": False
+                    }
+                    payment_link = razorpay_client.payment_link.create(payment_data)
                     
-                    # Check if UTR is already in the database
-                    response = supabase.table("claimed_utrs").select("*").eq("utr_number", utr_input).execute()
-                    
-                    if len(response.data) > 0:
-                        st.error("⚠️ This Transaction ID has already been used. Please enter a new valid UTR.")
-                    else:
-                        # Save it and unlock
-                        supabase.table("claimed_utrs").insert({"utr_number": utr_input}).execute()
-                        st.session_state.premium_unlocked = True
-                        st.rerun() # Refresh the UI to show the uploader
-                        
+                    # Save to memory and move to next step
+                    st.session_state.razorpay_link_id = payment_link['id']
+                    st.session_state.razorpay_url = payment_link['short_url']
+                    st.session_state.payment_step = "pending"
+                    st.rerun()
                 except Exception as e:
-                    st.error("Database connection error. Please try again or contact support.")
-            else:
-                st.error("❌ Please enter a valid 12-digit UTR number.")
+                    st.error("⚠️ Gateway temporarily unavailable. Please check your Razorpay keys and try again.")
 
+    # --- UI STATE 2: WAITING FOR VERIFICATION ---
+    elif st.session_state.payment_step == "pending":
+        st.warning("⏳ **Payment link generated!** Follow the 2 steps below:")
+        
+        # HTML button for opening payment gateway in a new tab
+        st.markdown(
+            f"""
+            <div style='text-align:center; padding: 15px;'>
+                <a href='{st.session_state.razorpay_url}' target='_blank' 
+                   style='font-size: 18px; font-weight: bold; background-color: #007bff; color: white; 
+                          padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;'>
+                   1️⃣ Click Here to Pay ₹49 (Opens in new tab)
+                </a>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+        
+        st.write("---")
+        st.markdown("#### 2️⃣ Did you complete the payment?")
+        st.write("Once your UPI app says successful, click the verification button below to unlock your report.")
+        
+        # Verification check
+        if st.button("✅ Yes, I have paid. Verify my transaction.", type="primary", use_container_width=True):
+            with st.spinner("Checking transaction status with the bank..."):
+                try:
+                    # Ask Razorpay for the status
+                    link_details = razorpay_client.payment_link.fetch(st.session_state.razorpay_link_id)
+                    
+                    if link_details['status'] == 'paid':
+                        # SILENT SUPABASE LEDGER LOGGING
+                        try:
+                            supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+                            supabase.table("claimed_utrs").insert({
+                                "utr_number": link_details['id'], 
+                                "status": "PAID"
+                            }).execute()
+                        except Exception as db_error:
+                            pass # Do not block the user if the ledger fails
+                        
+                        st.session_state.premium_unlocked = True
+                        st.session_state.payment_step = "success"
+                        st.rerun()
+                    else:
+                        st.error("⚠️ We haven't received the payment yet. If money was deducted, it may take 30-60 seconds to reflect. Please wait a moment and click verify again.")
+                except Exception as e:
+                    st.error("Could not reach the payment server. Please try verifying again.")
+
+# ---------------------------------------------------------
+# STATE 3: PREMIUM UNLOCKED & FILE UPLOADER
+# ---------------------------------------------------------
 else:
-    # 3. Premium Unlocked - Show File Uploader directly on the main page
     st.success("✅ Payment Verified! Premium Features Unlocked.")
-    # ADD the key= parameter to your existing uploader
+    
+    # Auto-clearing uploader using the dynamic key
     uploaded_file = st.file_uploader(
-    "Upload your medical report or joint image here:", 
-    type=["png", "jpg", "jpeg"],
-    key=f"uploader_{st.session_state.uploader_key}"
+        "Upload your medical report or joint image here:", 
+        type=["png", "jpg", "jpeg"],
+        key=f"uploader_{st.session_state.uploader_key}"
     )
     
     if uploaded_file is not None:
-        import hashlib
         file_hash = hashlib.md5(uploaded_file.getvalue()).hexdigest()
         
-        # Initialize memory for analyzed files if it doesn't exist
-        if "analyzed_files" not in st.session_state:
-            st.session_state.analyzed_files = []
-            
         # Check if this exact file has already been processed by the AI
         if file_hash in st.session_state.analyzed_files:
             st.warning("⚠️ Kindly upload a report or image only once. This is a duplicate.")
+            uploaded_file = None # Nullify it so it doesn't process again
         else:
             st.success("✅ Image loaded successfully! Please type your symptoms in the chat box below and hit Send to begin.")
-            
-    def encode_image(upload):
-        import base64
-        return base64.b64encode(upload.getvalue()).decode('utf-8')
 
 
-# Place this function near the top of your file with your other functions
+def encode_image(upload):
+    return base64.b64encode(upload.getvalue()).decode('utf-8')
+
+
 def display_letterhead_report(ai_content, logo_base64_string):
     """Wraps the AI text in a beautiful Achala Enterprises digital letterhead."""
-    
-    # Notice how the HTML touches the absolute left edge. No spaces!
     letterhead_html = f"""
 <div style="border: 2px solid #0f4c5c; border-radius: 8px; padding: 25px; background-color: #ffffff; color: #2b2b2b; font-family: 'Arial', sans-serif; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); margin-top: 20px;">
     <div style="display: flex; align-items: center; border-bottom: 2px solid #004d40; padding-bottom: 15px; margin-bottom: 20px;">
-        <img src="data:image/png;base64,{current_logo}" width="70" style="margin-right: 20px; border-radius: 50%;">
+        <img src="data:image/png;base64,{logo_base64_string}" width="70" style="margin-right: 20px; border-radius: 50%;">
         <div>
             <h2 style="margin: 0; color: #004d40; font-family: 'Helvetica Neue', sans-serif;">{pdf_hospital_name}</h2>
             <p style="margin: 5px 0 0 0; color: #666666; font-size: 14px;">{pdf_sub_header}</p>
@@ -299,11 +302,12 @@ def display_letterhead_report(ai_content, logo_base64_string):
     </div>
 </div>
 """
-    
     st.markdown(letterhead_html, unsafe_allow_html=True)
 
-# 6. Handle User Input
-# --- The Chat Input and AI Execution Block ---
+
+# ---------------------------------------------------------
+# CHAT EXECUTION BLOCK
+# ---------------------------------------------------------
 if user_input := st.chat_input("Describe your pain or upload an image above..."):
     
     # 1. Display user message and uploaded image
@@ -316,7 +320,6 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
     message_content = [{"type": "text", "text": user_input}]
     
     if uploaded_file is not None:
-        import hashlib
         current_hash = hashlib.md5(uploaded_file.getvalue()).hexdigest()
         
         # SMART CACHE: Only attach the image to the AI payload if it's brand new
@@ -326,17 +329,13 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 "type": "image_url",
                 "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
             })
-            # Add to our memory bank so it triggers the duplicate warning next time
-            st.session_state.analyzed_files.append(current_hash)
 
     # Save user's message to history
     st.session_state.messages.append({"role": "user", "content": message_content})
 
     # 3. Generate Assistant Response
     with st.chat_message("assistant"):
-        try: # --- OUTER TRY BLOCK BEGINS ---
-            
-            # --- SMART TRANSLATION PAYLOAD ---
+        try: 
             # Create a temporary copy of the chat history
             api_messages = st.session_state.messages.copy()
             
@@ -346,7 +345,7 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 "content": f"CRITICAL TRANSLATION RULE: You MUST generate your ENTIRE response, including the report analysis, headings, and Ayurvedic recommendations, strictly in {selected_language}. Ensure medical terms are translated beautifully so the common man can understand."
             })
             
-            # Call the AI Engine using the modified payload
+            # Call the AI Engine
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=api_messages,
@@ -354,17 +353,13 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
             )
             ai_response = response.choices[0].message.content
             
-            # --- THE CONDITIONAL RENDERING BLOCK ---
             if uploaded_file is not None:
-                # 1. Display the premium letterhead in the UI
-                # We use the 'current_logo' variable defined in your clinic setup!
+                # Display the premium letterhead in the UI
                 display_letterhead_report(ai_response, current_logo)
                 
-               # 2. Build the printable PDF version
-                # First, translate the AI's Markdown into beautifully structured HTML
+                # Build the printable PDF version
                 structured_html_content = markdown.markdown(ai_response, extensions=['extra', 'sane_lists', 'nl2br'])
                 
-                # Inject it into a PDF-optimized template (using tables for perfect alignment)
                 report_html = f"""
                 <html>
                 <head>
@@ -402,11 +397,11 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 </html>
                 """
                 
-                # 3. Generate the PDF inside a hidden memory buffer
+                # Generate the PDF
                 pdf_buffer = BytesIO()
                 pisa_status = pisa.CreatePDF(report_html, dest=pdf_buffer)
                 
-                # 4. Display the Download Button
+                # Display the Download Button
                 if not pisa_status.err:
                     st.download_button(
                         label="📄 Download Official PDF Report",
@@ -418,16 +413,15 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 else:
                     st.error("⚠️ Error generating the PDF report. Please try again.")
             
-            # --- PULL THESE 4 SPACES TO THE LEFT (Outside the if/else) ---
             # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": ai_response})
             
-            # Save the fingerprint so it can't be uploaded again
-            st.session_state.analyzed_files.append(file_hash)
+            if uploaded_file is not None:
+                # Save the fingerprint so it can't be uploaded again
+                st.session_state.analyzed_files.append(hashlib.md5(uploaded_file.getvalue()).hexdigest())
+                
+                # Force the file uploader to clear itself for the next run
+                st.session_state.uploader_key += 1
             
-            # Force the file uploader to clear itself for the next run
-            st.session_state.uploader_key += 1
-            
-        # --- PULL THIS ANOTHER 4 SPACES TO THE LEFT (Aligns with 'try:') ---
         except Exception as e: 
-            st.error("Error communicating with the AI Engine. Please check your API key.")
+            st.error(f"Error communicating with the AI Engine. Please try again. ({str(e)})")

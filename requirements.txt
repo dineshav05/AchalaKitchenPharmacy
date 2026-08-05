@@ -3,3 +3,4 @@ openai
 markdown
 xhtml2pdf
 supabase
+razorpay
