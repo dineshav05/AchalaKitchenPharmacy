@@ -47,84 +47,34 @@ if "report_language" not in st.session_state:
 
 # 2. Render the Main Landing Page if no mode is selected
     # --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
-# --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
+# ---------------------------------------------------------
+# CALLBACK FUNCTION (Fixes the rendering flash!)
+# ---------------------------------------------------------
+def set_clinic_mode(mode):
+    st.session_state.clinic_mode = mode
+
 # --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
 if st.session_state.clinic_mode is None:
-    # 1. NEW ROBUST CSS INJECTION
-    # We remove parent-dependent selectors to eliminate the render flash
+    # 1. Custom CSS Injection
     st.markdown("""
         <style>
-        /* Center text and add background/rounded corners for main header */
-        .ecosystem-wrapper {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        .ecosystem-header {
-            color: #666;
-            font-weight: bold;
-            letter-spacing: 1px;
-            font-size: 12px;
-            background-color: #f0f2f6;
-            padding: 8px 20px;
-            border-radius: 20px;
-        }
-        .main-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .step-header {
-            text-align: center;
-            margin-bottom: 10px;
-        }
+        .ecosystem-wrapper { display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }
+        .ecosystem-header { color: #666; font-weight: bold; letter-spacing: 1px; font-size: 12px; background-color: #f0f2f6; padding: 8px 20px; border-radius: 20px; }
+        .main-header { text-align: center; margin-bottom: 30px; }
+        .step-header { text-align: center; margin-bottom: 10px; }
 
-        /* 
-           NEW FLASH-PROOF CARDS
-           We use simple class names on our own HTML divs so they don't depend
-           on Streamlit re-calculating complex parent/child matches during re-runs.
-        */
-        .vibrant-card-ayurveda {
-            background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%);
-            border: 2px solid #ffe89e;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 10px;
-            text-align: center;
-            transition: transform 0.2s ease;
-        }
+        .vibrant-card-ayurveda { background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%); border: 2px solid #ffe89e; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
+        .vibrant-card-allopathic { background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%); border: 2px solid #b5d7ff; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
         
-        .vibrant-card-allopathic {
-            background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%);
-            border: 2px solid #b5d7ff;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 10px;
-            text-align: center;
-            transition: transform 0.2s ease;
-        }
+        .vibrant-card-ayurveda:hover, .vibrant-card-allopathic:hover { transform: translateY(-4px); }
 
-        /* Hover animation on both cards */
-        .vibrant-card-ayurveda:hover, .vibrant-card-allopathic:hover {
-            transform: translateY(-4px);
-        }
-
-        /* Clean text styling inside the cards */
         .card-icon { font-size: 45px; margin-bottom: 10px; }
         .card-title { color: #2c3e50; font-weight: bold; font-size: 20px; margin-bottom: 5px; }
         .card-subtitle { color: #7f8c8d; font-style: italic; font-size: 14px; margin-bottom: 15px; }
         .card-description { color: #34495e; font-size: 15px; line-height: 1.5; margin-bottom: 0px;}
         
-        /* Round the Streamlit buttons to match the card aesthetics */
-        button[kind="primary"], button[kind="secondary"] {
-            border-radius: 12px !important;
-            margin-top: 0px !important;
-        }
-        
-        /* UX Fix: Standardize button spacing to sit clean under the description */
-        div[data-testid="column"] > div > div > div[data-testid="stVerticalBlock"] > div > div {
-             margin-top: 5px !important;
-        }
+        button[kind="primary"], button[kind="secondary"] { border-radius: 12px !important; margin-top: 0px !important; }
+        div[data-testid="column"] > div > div > div[data-testid="stVerticalBlock"] > div > div { margin-top: 5px !important; }
         </style>
         """, unsafe_allow_html=True)
 
@@ -136,7 +86,6 @@ if st.session_state.clinic_mode is None:
     """, unsafe_allow_html=True)
     st.markdown("<h1 class='main-header'>Digital Clinic Workspace</h1>", unsafe_allow_html=True)
     
-    # Center the entire onboarding section
     col1, col2, col3 = st.columns([1, 10, 1])
     
     with col2:
@@ -161,7 +110,6 @@ if st.session_state.clinic_mode is None:
         
         # Flashcard 1: Ayurvedic Clinic
         with card_col1:
-            # We generate the description part of the card as one single HTML block
             st.markdown("""
                 <div class='vibrant-card-ayurveda'>
                     <div class='card-icon'>🌿</div>
@@ -171,19 +119,11 @@ if st.session_state.clinic_mode is None:
                 </div>
                 """, unsafe_allow_html=True)
             
-            # The interactive Streamlit button sits clean below the HTML card
-            if st.button("Launch Ayurvedic Clinic", key="btn_ayurveda", use_container_width=True, type="primary"):
-                # --- UX FIX: Wrap navigation in a spinner to mask the FOUC ---
-                with st.spinner("Navigating to Ayurvedic Clinic..."):
-                    st.session_state.clinic_mode = "Ayurvedic"
-                    # Add a tiny delay (0.2s) just to ensure spinner shows smoothly
-                    import time
-                    time.sleep(0.2)
-                    st.rerun()
+            # THE FIX: Use on_click callback instead of an if statement + rerun
+            st.button("Launch Ayurvedic Clinic", key="btn_ayurveda", use_container_width=True, type="primary", on_click=set_clinic_mode, args=("Ayurvedic",))
                     
         # Flashcard 2: Allopathic Clinic
         with card_col2:
-            # We generate the description part of the card as one single HTML block
             st.markdown("""
                 <div class='vibrant-card-allopathic'>
                     <div class='card-icon'>🩺</div>
@@ -193,15 +133,8 @@ if st.session_state.clinic_mode is None:
                 </div>
                 """, unsafe_allow_html=True)
             
-            # The interactive Streamlit button sits clean below the HTML card
-            if st.button("Launch Allopathic Clinic", key="btn_allopathic", use_container_width=True):
-                # --- UX FIX: Wrap navigation in a spinner to mask the FOUC ---
-                with st.spinner("Navigating to Clinical Translator..."):
-                    st.session_state.clinic_mode = "Allopathic"
-                    # Add a tiny delay (0.2s) just to ensure spinner shows smoothly
-                    import time
-                    time.sleep(0.2)
-                    st.rerun()
+            # THE FIX: Use on_click callback instead of an if statement + rerun
+            st.button("Launch Allopathic Clinic", key="btn_allopathic", use_container_width=True, on_click=set_clinic_mode, args=("Allopathic",))
                     
     # Stop the rest of the chat UI from loading until a card is clicked
     st.stop()
