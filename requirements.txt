@@ -3,5 +3,4 @@ openai
 markdown
 xhtml2pdf
 supabase
-razorpay==1.4.1
-setuptools
+razorpay==2.0.1
