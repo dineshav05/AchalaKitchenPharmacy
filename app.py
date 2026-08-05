@@ -47,79 +47,83 @@ if "report_language" not in st.session_state:
 
 # 2. Render the Main Landing Page if no mode is selected
     # --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
+# --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
 if st.session_state.clinic_mode is None:
-    # 1. Custom CSS Injection for Vibrant Look, Centered Text, and Animations
+    # 1. Custom CSS Injection
     st.markdown("""
         <style>
-        /* Center text and add background/rounded corners for main header */
+        /* Perfectly center the Achala Ecosystem header using Flexbox */
+        .ecosystem-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 15px;
+        }
         .ecosystem-header {
-            text-align: center;
             color: #666;
             font-weight: bold;
             letter-spacing: 1px;
             font-size: 12px;
             background-color: #f0f2f6;
-            padding: 10px;
-            border-radius: 15px;
-            width: fit-content;
-            margin: 0 auto;
+            padding: 8px 20px;
+            border-radius: 20px;
         }
         .main-header {
             text-align: center;
             margin-bottom: 30px;
         }
-        /* Step headers */
         .step-header {
             text-align: center;
             margin-bottom: 10px;
         }
-        /* Vibrant Card Styling - Center Content, Color, Rounded, Hover Animation */
-        div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column;"] > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
-            border-radius: 20px !important;
-            padding: 25px !important;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        /* Hover animation and shadow on both cards */
-        div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column;"] > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:hover {
-            transform: translateY(-8px);
-            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
-        }
-        /* Specific card colors and icons */
-        .card-ayurveda {
+
+        /* 
+           MAGIC TRICK: Style the entire Streamlit Column so the button is INSIDE the background!
+           We use the :has() selector to find the column containing our hidden markers.
+        */
+        div[data-testid="column"]:has(.ayurveda-marker) {
             background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%);
             border: 2px solid #ffe89e;
+            border-radius: 20px;
+            padding: 20px; 
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .card-allopathic {
+        div[data-testid="column"]:has(.ayurveda-marker):hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        div[data-testid="column"]:has(.allopathic-marker) {
             background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%);
             border: 2px solid #b5d7ff;
+            border-radius: 20px;
+            padding: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .card-icon {
-            font-size: 40px;
-            margin-bottom: 15px;
+        div[data-testid="column"]:has(.allopathic-marker):hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
-        .card-title {
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-        .card-subtitle {
-            color: #7f8c8d;
-            font-style: italic;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-        .card-description {
-            color: #34495e;
-            font-size: 15px;
-            margin-bottom: 20px;
-            line-height: 1.6;
+
+        /* Clean text styling inside the cards */
+        .card-icon { font-size: 45px; text-align: center; margin-bottom: 10px; }
+        .card-title { color: #2c3e50; text-align: center; font-weight: bold; font-size: 20px; margin-bottom: 5px; }
+        .card-subtitle { color: #7f8c8d; text-align: center; font-style: italic; font-size: 14px; margin-bottom: 15px; }
+        .card-description { color: #34495e; text-align: center; font-size: 15px; margin-bottom: 15px; line-height: 1.5; }
+        
+        /* Round the Streamlit buttons to match the card aesthetics */
+        button[kind="primary"], button[kind="secondary"] {
+            border-radius: 12px !important;
         }
         </style>
         """, unsafe_allow_html=True)
 
-    # 2. Render Header (Custom background and rounded corners)
-    st.markdown("<p class='ecosystem-header'>ACHALA ECOSYSTEM</p>", unsafe_allow_html=True)
+    # 2. Render Header (Using the new flexbox wrapper)
+    st.markdown("""
+        <div class='ecosystem-wrapper'>
+            <div class='ecosystem-header'>ACHALA ECOSYSTEM</div>
+        </div>
+    """, unsafe_allow_html=True)
     st.markdown("<h1 class='main-header'>Digital Clinic Workspace</h1>", unsafe_allow_html=True)
     
     # Center the entire onboarding section
@@ -143,33 +147,36 @@ if st.session_state.clinic_mode is None:
         # --- STEP 2: Clinic Selection (Flashcards) ---
         st.markdown("<h3 class='step-header'>🏥 Step 2: Select Operating Mode</h3>", unsafe_allow_html=True)
         
-        # Use HTML/CSS to inject the colorful, animated cards
         card_col1, card_col2 = st.columns(2)
         
         # Flashcard 1: Ayurvedic Clinic
         with card_col1:
-            st.markdown(f"""
-                <div class='card-ayurveda' style='border-radius: 20px; padding: 25px; border: 2px solid #ffe89e; text-align: center;'>
-                    <div class='card-icon'>🌿</div>
-                    <h3 class='card-title'>Achala Digital Vaidya</h3>
-                    <p class='card-subtitle'>Kitchen Pharmacy AI</p>
-                    <p class='card-description'>Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain.</p>
-                </div>
+            # This hidden marker tells our CSS to apply the yellow background to this specific column
+            st.markdown("<span class='ayurveda-marker'></span>", unsafe_allow_html=True)
+            
+            st.markdown("""
+                <div class='card-icon'>🌿</div>
+                <div class='card-title'>Achala Digital Vaidya</div>
+                <div class='card-subtitle'>Kitchen Pharmacy AI</div>
+                <div class='card-description'>Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain.</div>
                 """, unsafe_allow_html=True)
+            
             if st.button("Launch Ayurvedic Clinic", key="btn_ayurveda", use_container_width=True, type="primary"):
                 st.session_state.clinic_mode = "Ayurvedic"
                 st.rerun()
                     
         # Flashcard 2: Allopathic Clinic
         with card_col2:
-            st.markdown(f"""
-                <div class='card-allopathic' style='border-radius: 20px; padding: 25px; border: 2px solid #b5d7ff; text-align: center;'>
-                    <div class='card-icon'>🩺</div>
-                    <h3 class='card-title'>Clinical Translator</h3>
-                    <p class='card-subtitle'>Evidence-Based AI</p>
-                    <p class='card-description'>Empowering patients through clear, evidence-based medical translations and clinical clarity.</p>
-                </div>
+            # This hidden marker tells our CSS to apply the blue background to this specific column
+            st.markdown("<span class='allopathic-marker'></span>", unsafe_allow_html=True)
+            
+            st.markdown("""
+                <div class='card-icon'>🩺</div>
+                <div class='card-title'>Clinical Translator</div>
+                <div class='card-subtitle'>Evidence-Based AI</div>
+                <div class='card-description'>Empowering patients through clear, evidence-based medical translations and clinical clarity.</div>
                 """, unsafe_allow_html=True)
+            
             if st.button("Launch Allopathic Clinic", key="btn_allopathic", use_container_width=True):
                 st.session_state.clinic_mode = "Allopathic"
                 st.rerun()
