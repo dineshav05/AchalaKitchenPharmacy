@@ -121,6 +121,7 @@ if st.session_state.clinic_mode == "Ayurvedic":
     current_logo = logo_base64 # Make sure this matches your actual logo variable!
     brand_title = "Achala Digital Vaidya"
     brand_badge = "KITCHEN PHARMACY AI"
+    brand_caption = '"Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain, inspired by Shri Rajiv Dixit Ji."'
     
     # LETTERHEAD VARIABLES
     pdf_hospital_name = "Achala Digital Vaidya"
@@ -143,6 +144,7 @@ elif st.session_state.clinic_mode == "Allopathic":
     current_logo = allopathic_logo_base64 # Update if you have a different logo for this mode
     brand_title = "Patient Education & Clinical Translator"
     brand_badge = "EVIDENCE-BASED AI"
+    brand_caption = '"Empowering patients through clear, evidence-based medical translations and clinical clarity."'
     
     # LETTERHEAD VARIABLES
     pdf_hospital_name = "Clinical Translation Portal"
