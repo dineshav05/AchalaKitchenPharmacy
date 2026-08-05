@@ -48,37 +48,41 @@ if "report_language" not in st.session_state:
 # 2. Render the Main Landing Page if no mode is selected
     # --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
 # ---------------------------------------------------------
-# CALLBACK FUNCTION (Fixes the rendering flash!)
+# CALLBACK FUNCTION
 # ---------------------------------------------------------
 def set_clinic_mode(mode):
     st.session_state.clinic_mode = mode
 
+# ---------------------------------------------------------
+# GLOBAL CSS INJECTION (Moved OUTSIDE the if statement!)
+# ---------------------------------------------------------
+st.markdown("""
+    <style>
+    .ecosystem-wrapper { display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }
+    .ecosystem-header { color: #666; font-weight: bold; letter-spacing: 1px; font-size: 12px; background-color: #f0f2f6; padding: 8px 20px; border-radius: 20px; }
+    .main-header { text-align: center; margin-bottom: 30px; }
+    .step-header { text-align: center; margin-bottom: 10px; }
+
+    .vibrant-card-ayurveda { background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%); border: 2px solid #ffe89e; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
+    .vibrant-card-allopathic { background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%); border: 2px solid #b5d7ff; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
+    
+    .vibrant-card-ayurveda:hover, .vibrant-card-allopathic:hover { transform: translateY(-4px); }
+
+    .card-icon { font-size: 45px; margin-bottom: 10px; }
+    .card-title { color: #2c3e50; font-weight: bold; font-size: 20px; margin-bottom: 5px; }
+    .card-subtitle { color: #7f8c8d; font-style: italic; font-size: 14px; margin-bottom: 15px; }
+    .card-description { color: #34495e; font-size: 15px; line-height: 1.5; margin-bottom: 0px;}
+    
+    button[kind="primary"], button[kind="secondary"] { border-radius: 12px !important; margin-top: 0px !important; }
+    div[data-testid="column"] > div > div > div[data-testid="stVerticalBlock"] > div > div { margin-top: 5px !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+
 # --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
 if st.session_state.clinic_mode is None:
-    # 1. Custom CSS Injection
-    st.markdown("""
-        <style>
-        .ecosystem-wrapper { display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }
-        .ecosystem-header { color: #666; font-weight: bold; letter-spacing: 1px; font-size: 12px; background-color: #f0f2f6; padding: 8px 20px; border-radius: 20px; }
-        .main-header { text-align: center; margin-bottom: 30px; }
-        .step-header { text-align: center; margin-bottom: 10px; }
-
-        .vibrant-card-ayurveda { background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%); border: 2px solid #ffe89e; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
-        .vibrant-card-allopathic { background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%); border: 2px solid #b5d7ff; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
-        
-        .vibrant-card-ayurveda:hover, .vibrant-card-allopathic:hover { transform: translateY(-4px); }
-
-        .card-icon { font-size: 45px; margin-bottom: 10px; }
-        .card-title { color: #2c3e50; font-weight: bold; font-size: 20px; margin-bottom: 5px; }
-        .card-subtitle { color: #7f8c8d; font-style: italic; font-size: 14px; margin-bottom: 15px; }
-        .card-description { color: #34495e; font-size: 15px; line-height: 1.5; margin-bottom: 0px;}
-        
-        button[kind="primary"], button[kind="secondary"] { border-radius: 12px !important; margin-top: 0px !important; }
-        div[data-testid="column"] > div > div > div[data-testid="stVerticalBlock"] > div > div { margin-top: 5px !important; }
-        </style>
-        """, unsafe_allow_html=True)
-
-    # 2. Render Header 
+    
+    # 1. Render Header 
     st.markdown("""
         <div class='ecosystem-wrapper'>
             <div class='ecosystem-header'>ACHALA ECOSYSTEM</div>
@@ -119,7 +123,6 @@ if st.session_state.clinic_mode is None:
                 </div>
                 """, unsafe_allow_html=True)
             
-            # THE FIX: Use on_click callback instead of an if statement + rerun
             st.button("Launch Ayurvedic Clinic", key="btn_ayurveda", use_container_width=True, type="primary", on_click=set_clinic_mode, args=("Ayurvedic",))
                     
         # Flashcard 2: Allopathic Clinic
@@ -133,7 +136,6 @@ if st.session_state.clinic_mode is None:
                 </div>
                 """, unsafe_allow_html=True)
             
-            # THE FIX: Use on_click callback instead of an if statement + rerun
             st.button("Launch Allopathic Clinic", key="btn_allopathic", use_container_width=True, on_click=set_clinic_mode, args=("Allopathic",))
                     
     # Stop the rest of the chat UI from loading until a card is clicked
