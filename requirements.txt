@@ -4,3 +4,4 @@ markdown
 xhtml2pdf
 supabase
 razorpay==2.0.1
+setuptools==81.0.0
