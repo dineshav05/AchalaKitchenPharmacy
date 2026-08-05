@@ -11,7 +11,7 @@ from xhtml2pdf import pisa
 from supabase import create_client, Client
 
 # ---------------------------------------------------------
-# RAZORPAY REST API (Bypasses library dependency issues)
+# RAZORPAY REST API (Bypasses library dependency issues) 
 # ---------------------------------------------------------
 def create_payment_link(receipt_id, customer_name="Patient"):
     url = "https://api.razorpay.com/v1/payment_links"
