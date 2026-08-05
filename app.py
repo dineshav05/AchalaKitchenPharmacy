@@ -31,7 +31,7 @@ def create_payment_link(receipt_id, customer_name="Patient"):
         response = requests.post(
             url, 
             json=payload, 
-            auth=HTTPBasicAuth(st.secrets["rzp_live_TM95VSFW3eN4OT"], st.secrets["GZRL3p0UvJWKWKEsmtEgoC2U"]),
+            auth=HTTPBasicAuth(st.secrets["RAZORPAY_KEY_ID"], st.secrets["RAZORPAY_KEY_SECRET"]),
             timeout=10
         )
         if response.status_code == 200:
