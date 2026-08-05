@@ -181,7 +181,11 @@ st.markdown(
 # PREMIUM FEATURE: RAZORPAY + SUPABASE LEDGER
 # ---------------------------------------------------------
 if not st.session_state.premium_unlocked:
-    st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis. Automatically generate and download your personalized PDF report in **English, Hindi, Kannada, and more!** (Fee: ₹49)")
+    # 1. The Core Value Proposition
+    st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and get a downloadable PDF. (Fee: ₹49)")
+    
+    # 2. The Dynamic Language Warning (Highlights their current selection)
+    st.warning(f"⚠️ **Important:** Your report will be generated in **{selected_language}**. If you need a different language (like Hindi, Kannada and other regional languages), please select it from the left menu *before* paying!")
     
     # Initialize the Razorpay Client safely using .get()
     try:
