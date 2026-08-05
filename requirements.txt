@@ -3,4 +3,5 @@ openai
 markdown
 xhtml2pdf
 supabase
+razorpay
 razorpay==1.4.1
