@@ -181,7 +181,7 @@ st.markdown(
 # PREMIUM FEATURE: RAZORPAY + SUPABASE LEDGER
 # ---------------------------------------------------------
 if not st.session_state.premium_unlocked:
-    st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis. (Fee: ₹49)")
+    st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis. Automatically generate and download your personalized PDF report in **English, Hindi, Kannada, and more!** (Fee: ₹49)")
     
     # Initialize the Razorpay Client safely using .get()
     try:
