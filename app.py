@@ -46,58 +46,6 @@ if "report_language" not in st.session_state:
     st.session_state.report_language = "English"
 
 # 2. Render the Main Landing Page if no mode is selected
-if st.session_state.clinic_mode is None:
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #666; font-weight: bold; letter-spacing: 1px; font-size: 12px;'>ACHALA ECOSYSTEM</p>", unsafe_allow_html=True)
-    st.markdown("<h1 style='text-align: center; margin-bottom: 30px;'>Digital Clinic Workspace</h1>", unsafe_allow_html=True)
-    
-    # Center the layout for a clean desktop and mobile view
-    col1, col2, col3 = st.columns([1, 10, 1])
-    
-    with col2:
-        # --- STEP 1: Language Selection ---
-        st.markdown("### 🌐 Step 1: Choose Report Language")
-        st.info("The AI will automatically analyze your medical reports and reply in the language selected below.")
-        
-        languages = ["English", "Hindi", "Kannada", "Telugu", "Tamil", "Marathi", "Malayalam"]
-        
-        # Save the language directly into session state
-        st.session_state.report_language = st.selectbox(
-            "Select Language:",
-            languages,
-            index=languages.index(st.session_state.report_language),
-            label_visibility="collapsed"
-        )
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # --- STEP 2: Clinic Selection (Flashcards) ---
-        st.markdown("### 🏥 Step 2: Select Operating Mode")
-        card_col1, card_col2 = st.columns(2)
-        
-        # Flashcard 1: Ayurvedic
-        with card_col1:
-            with st.container(border=True):
-                st.markdown("#### 🌿 Achala Digital Vaidya")
-                st.write("*Kitchen Pharmacy AI*")
-                st.write("Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide.")
-                st.write("") 
-                if st.button("Launch Ayurvedic Clinic", key="btn_ayurveda", use_container_width=True):
-                    st.session_state.clinic_mode = "Ayurvedic"
-                    st.rerun()
-                    
-        # Flashcard 2: Allopathic
-        with card_col2:
-            with st.container(border=True):
-                st.markdown("#### 🩺 Clinical Translator")
-                st.write("*Evidence-Based AI*")
-                st.write("Empowering patients through clear, evidence-based medical translations.")
-                st.write("")
-                if st.button("Launch Allopathic Clinic", key="btn_allopathic", use_container_width=True):
-                    st.session_state.clinic_mode = "Allopathic"
-                    st.rerun()
-                    
-
     # --- STEP-BY-STEP CUSTOMER ONBOARDING UI WITH VIBRANT CARDS ---
 if st.session_state.clinic_mode is None:
     # 1. Custom CSS Injection for Vibrant Look, Centered Text, and Animations
