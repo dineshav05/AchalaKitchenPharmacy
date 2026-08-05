@@ -117,11 +117,10 @@ if st.session_state.clinic_mode is not None:
     selected_language = st.session_state.report_language
 
 # 1. Define UI Variables and AI Brain Based on Clinic Setup
-if clinic_mode == "Ayurvedic (Achala Digital Vaidya)":
-    current_logo = logo_base64  
+if st.session_state.clinic_mode == "Ayurvedic":
+    current_logo = logo_base64 # Make sure this matches your actual logo variable!
     brand_title = "Achala Digital Vaidya"
-    brand_badge = "Kitchen Pharmacy AI"
-    brand_caption = '"Decode your diagnosis. Heal with heritage. An empowering Ayurvedic guide to joint and back pain, inspired by Shri Rajiv Dixit Ji."'
+    brand_badge = "KITCHEN PHARMACY AI"
     
     # LETTERHEAD VARIABLES
     pdf_hospital_name = "Achala Digital Vaidya"
@@ -140,11 +139,10 @@ if clinic_mode == "Ayurvedic (Achala Digital Vaidya)":
     6. NEVER use numbered lists (1, 2, 3...) for patient details. Use Markdown subheadings (e.g., ### Patient Information) and bullet points.
     """
 
-else:
-    current_logo = allopathic_logo_base64  
+elif st.session_state.clinic_mode == "Allopathic":
+    current_logo = allopathic_logo_base64 # Update if you have a different logo for this mode
     brand_title = "Patient Education & Clinical Translator"
-    brand_badge = "Evidence-Based AI"
-    brand_caption = '"Empowering patients through clear, evidence-based medical translations and clinical clarity."'
+    brand_badge = "EVIDENCE-BASED AI"
     
     # LETTERHEAD VARIABLES
     pdf_hospital_name = "Clinical Translation Portal"
