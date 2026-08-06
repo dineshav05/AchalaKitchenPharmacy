@@ -1,3 +1,4 @@
+import time
 import streamlit as st
 import requests
 from requests.auth import HTTPBasicAuth
@@ -15,12 +16,14 @@ from supabase import create_client, Client
 # ---------------------------------------------------------
 def create_payment_link(receipt_id, customer_name="Patient"):
     url = "https://api.razorpay.com/v1/payment_links"
+    unique_ref_id = f"ACHALA_ORDER_{int(time.time())}"
+    
     payload = {
         "amount": 4900,
         "currency": "INR",
         "accept_partial": False,
         "description": "Achala Digital Vaidya - Report Analysis",
-        "reference_id": receipt_id,
+        "reference_id": unique_ref_id,
         "customer": {"name": customer_name},
         "notify": {"sms": False, "email": False},
         "reminder_enable": False,
