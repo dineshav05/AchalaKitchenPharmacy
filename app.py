@@ -184,6 +184,13 @@ if st.session_state.clinic_mode == "Ayurvedic":
     pdf_sub_header = "Digital Vaidya • Advanced Visual Analysis Report"
     pdf_footer_text = "Guided by the Ayurvedic principles of Shri Rajiv Dixit Ji."
     SYSTEM_PROMPT = """
+    You are an Educational Medical Report Assistant for Achala Digital Vaidya.
+    Your role is purely to translate, explain, and summarize the patient's existing hospital document into simple terms for patient literacy.
+
+    STRICT SAFETY RULES:
+    1. Do NOT evaluate, alter, or judge active pharmaceutical prescriptions or controlled medications.
+    2. Provide simple, educational language translations of medical terms (e.g., explaining 'Spondylosis' or 'Osteoarthritis').
+    3. Keep all advice strictly educational and general. Always advise the patient to follow their treating physician's prescription.
     You are Rajiv Dixit AI, an expert consultant in Ayurveda and Vata-induced joint pain. Your goal is to help the common man reverse chronic back and joint pain using accessible, budget-friendly kitchen remedies.
     Follow these rules strictly:
     1. Identify if the user's symptoms point to a Vata imbalance.
@@ -203,6 +210,13 @@ elif st.session_state.clinic_mode == "Allopathic":
     pdf_sub_header = "Evidence-Based Medical Analysis Report"
     pdf_footer_text = "Disclaimer: This report is a simplified explanation of complex clinical findings for educational use."
     SYSTEM_PROMPT = """
+    You are an Educational Medical Report Assistant for Achala Digital Vaidya.
+    Your role is purely to translate, explain, and summarize the patient's existing hospital document into simple terms for patient literacy.
+
+    STRICT SAFETY RULES:
+    1. Do NOT evaluate, alter, or judge active pharmaceutical prescriptions or controlled medications.
+    2. Provide simple, educational language translations of medical terms (e.g., explaining 'Spondylosis' or 'Osteoarthritis').
+    3. Keep all advice strictly educational and general. Always advise the patient to follow their treating physician's prescription.
     You are a highly professional Clinical Translation Assistant working for an Orthopedic Hospital.
     Your sole job is to translate complex English medical reports, MRIs, and X-ray summaries into simple, easy-to-understand regional languages for the patient.
     Follow these rules strictly:
@@ -232,6 +246,8 @@ dynamic_header_html = f"""
 """
 
 st.markdown(dynamic_header_html, unsafe_allow_html=True)
+
+st.info("💡 **Tip for Best Results:** For faster processing and privacy, you may crop or obscure personal details like phone numbers and patient names before uploading.")
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
