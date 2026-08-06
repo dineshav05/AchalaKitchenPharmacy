@@ -11,13 +11,69 @@ from io import BytesIO
 from weasyprint import HTML, CSS
 from supabase import create_client, Client
 
+# ==========================================
+# 🧠 AI PROMPT ARCHITECTURE
+# ==========================================
+
+BASE_SAFETY_CORE = """
+You are Achala Digital Vaidya, an educational medical assistant dedicated to patient literacy.
+
+STRICT SAFETY & QUALITY RULES:
+1. EDUCATIONAL ONLY: You do not diagnose, treat, or modify active medical prescriptions.
+2. UNCERTAINTY HANDLING: If text or image sections are blurry or partially cut off, explicitly state 'This portion is illegible'—NEVER guess.
+3. HIGH-RISK DE-ESCALATION: If severe trauma or controlled substances (e.g., opioids) are identified, provide a simple summary of text and advise consulting their treating physician immediately.
+4. UNIFORM MARKDOWN: You MUST output using the exact headings provided in your active mode instructions.
+"""
+
+PERSONA_ALLOPATHY = """
+TONE: Objective, clear, precise, and clinical yet easily understandable for a layperson.
+
+OUTPUT STRUCTURE:
+### 🩺 ವರದಿ ಸಾರಾಂಶ (Clinical Summary)
+[2-3 sentence clear translation of clinical findings]
+
+### 🧪 ಮುಖ್ಯ ಸಂಶೋಧನೆಗಳು (Key Findings & Lab Values)
+[Break down complex medical terminology, imaging notes, or abnormal lab values into plain terms]
+
+### 💊 ನಮೂದಿಸಿದ ಔಷಧಿಗಳು (Prescribed Medications Context)
+[Briefly explain the standard physiological purpose of the active ingredients without altering dosages]
+
+### ⚠️ ಗಮನಿಸಬೇಕಾದ ಲಕ್ಷಣಗಳು (Red Flag Warnings)
+[Standard medical warning signs that require immediate physician contact]
+"""
+
+PERSONA_AYURVEDA = """
+TONE: Empathetic, warm, holistic, and wise. Inspired by traditional health education and Shri Rajiv Dixit Ji's principles of preventative care.
+
+OUTPUT STRUCTURE:
+### 🩺 ವರದಿ ಸಾರಾಂಶ (Report Summary)
+[2-3 sentence educational breakdown of the health document]
+
+### 🌿 ಅಡುಗೆಮನೆ ಮತ್ತು ಆಹಾರ ಸಂಸ್ಕೃತಿ (Kitchen Pharmacy & Aahara)
+[Provide gentle, food-based lifestyle alignments using common kitchen ingredients like ginger, turmeric, or warm water routines]
+
+### 🧘 ಜೀವನಶೈಲಿ ಮತ್ತು ವಿಹಾರ (Lifestyle & Vihara Guidelines)
+[Simple posture, rest, or daily routine recommendations]
+
+### ⚠️ ವೈದ್ಯರನ್ನು ಯಾವಾಗ ಸಂಪರ್ಕಿಸಬೇಕು (When to Consult a Specialist)
+[Gentle reminder on symptoms that warrant immediate professional medical care]
+"""
+
+def get_system_prompt(mode: str, language: str) -> str:
+    """Combines the shared safety foundation with the requested persona and language directive."""
+    persona = PERSONA_AYURVEDA if mode == "Ayurveda" else PERSONA_ALLOPATHY
+    language_directive = f"\n\nCRITICAL LANGUAGE RULE: You MUST output the entire response exclusively in {language}."
+    return BASE_SAFETY_CORE + persona + language_directive
+
+# ==========================================
+
 # ---------------------------------------------------------
 # RAZORPAY REST API (Bypasses library dependency issues) 
 # ---------------------------------------------------------
 def create_payment_link(receipt_id, customer_name="Patient"):
     url = "https://api.razorpay.com/v1/payment_links"
     unique_ref_id = f"ACHALA_ORDER_{int(time.time())}"
-    
+
     payload = {
         "amount": 4900,
         "currency": "INR",
@@ -252,11 +308,17 @@ st.markdown(dynamic_header_html, unsafe_allow_html=True)
 
 st.info("💡 **Tip for Best Results:** For faster processing and privacy, you may crop or obscure personal details like phone numbers and patient names before uploading.")
 
-if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-else:
-    st.session_state.messages[0] = {"role": "system", "content": SYSTEM_PROMPT}
+# 1. Generate the dynamic prompt based on the user's current UI selections
+dynamic_system_prompt = get_system_prompt(mode=selected_mode, language=selected_language)
 
+# 2. Inject it into your existing session state logic
+if "messages" not in st.session_state:
+    st.session_state.messages = [{"role": "system", "content": dynamic_system_prompt}]
+else:
+    # Overwrite the old system prompt if the user changed the language or mode
+    st.session_state.messages[0] = {"role": "system", "content": dynamic_system_prompt}
+
+# 3. Your existing chat rendering loop
 for message in st.session_state.messages:
     if message["role"] == "system":
         continue
@@ -413,26 +475,39 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
             })
 
+# 1. Append the user's message to the session state history
     st.session_state.messages.append({"role": "user", "content": message_content})
 
+    # 2. Trigger the Assistant UI and API Call
     with st.chat_message("assistant"):
-       with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
+        with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
             try: 
+                # Copy the history (which includes your Modular System Prompt at index 0)
                 api_messages = st.session_state.messages.copy()
                 
                 # --- STRONGER MULTILINGUAL OVERRIDE PROMPT ---
+                # Placed at the end to act as a strict, final reminder before generation
                 api_messages.append({
                     "role": "system", 
                     "content": f"CRITICAL INSTRUCTION: You are fully capable of speaking {selected_language}. The user requires this English medical document to be translated and explained entirely in {selected_language}. You MUST generate your ENTIRE response, including all headings, Ayurvedic remedies, and clinical explanations, strictly in {selected_language}. Do not output English."
                 })
                 
-                # --- UPGRADE MODEL TO gpt-4o ---
+                # --- THE API CALL ---
                 response = client.chat.completions.create(
-                    model="gpt-4o", # Changed from gpt-4o-mini to the flagship omni model
+                    model="gpt-4o", 
                     messages=api_messages,
-                    temperature=0.6,
+                    temperature=0.3, # Lowered for clinical precision and strict adherence to formatting
                 )
+                
+                # 3. Extract, display, and save the AI's response
                 ai_response = response.choices[0].message.content
+                
+                st.markdown(ai_response) # Renders the Markdown output in the UI
+                
+                st.session_state.messages.append({"role": "assistant", "content": ai_response})
+                
+            except Exception as e:
+                st.error(f"Error communicating with the Achala Intelligence Engine. Please try again. ({e})")
                 
                 if uploaded_file is not None:
                     display_letterhead_report(ai_response, current_logo)
