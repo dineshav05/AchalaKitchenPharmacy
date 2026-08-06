@@ -308,21 +308,17 @@ st.markdown(dynamic_header_html, unsafe_allow_html=True)
 
 st.info("💡 **Tip for Best Results:** For faster processing and privacy, you may crop or obscure personal details like phone numbers and patient names before uploading.")
 
-# 1. First, define the variables from the user's UI selection
-selected_mode = st.selectbox("Select Treatment Mode", ["Ayurveda", "Allopathy"])
-selected_language = st.selectbox("Select Language", ["English", "Hindi", "Kannada", "Telugu"])
-
-# 2. THEN, generate the prompt using those variables
+# 1. THEN, generate the prompt using those variables
 dynamic_system_prompt = get_system_prompt(mode=selected_mode, language=selected_language)
 
-# 3. Inject it into your existing session state logic
+# 2. Inject it into your existing session state logic
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": dynamic_system_prompt}]
 else:
     # Overwrite the old system prompt if the user changed the language or mode
     st.session_state.messages[0] = {"role": "system", "content": dynamic_system_prompt}
 
-# 4. Your existing chat rendering loop
+# 3. Your existing chat rendering loop
 for message in st.session_state.messages:
     if message["role"] == "system":
         continue
@@ -484,29 +480,33 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
 
     # 2. Trigger the Assistant UI and API Call
     with st.chat_message("assistant"):
-        with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
+       with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
             try: 
-                # Copy the history (which includes your Modular System Prompt at index 0)
-                api_messages = st.session_state.messages.copy()
+                # 1. Generate the structured prompt dynamically based on the UI state
+                dynamic_prompt = get_system_prompt(mode=selected_mode, language=selected_language)
                 
-                # --- STRONGER MULTILINGUAL OVERRIDE PROMPT ---
-                # Placed at the end to act as a strict, final reminder before generation
+                # 2. Build a fresh message list for this specific API call
+                api_messages = [
+                    {"role": "system", "content": dynamic_prompt},
+                    {"role": "user", "content": message_content} # Your image and text payload
+                ]
+                
+                # 3. Append your brilliant Multilingual Override Prompt
                 api_messages.append({
                     "role": "system", 
                     "content": f"CRITICAL INSTRUCTION: You are fully capable of speaking {selected_language}. The user requires this English medical document to be translated and explained entirely in {selected_language}. You MUST generate your ENTIRE response, including all headings, Ayurvedic remedies, and clinical explanations, strictly in {selected_language}. Do not output English."
                 })
                 
-                # --- THE API CALL ---
+                # 4. Execute the API Call
                 response = client.chat.completions.create(
-                    model="gpt-4o", 
+                    model="gpt-4o",
                     messages=api_messages,
-                    temperature=0.3, # Lowered for clinical precision and strict adherence to formatting
+                    temperature=0.3, # Keeps the output formatting strict
                 )
                 
-                # 3. Extract, display, and save the AI's response
                 ai_response = response.choices[0].message.content
                 
-                st.markdown(ai_response) # Renders the Markdown output in the UI
+                st.markdown(ai_response)
                 
                 st.session_state.messages.append({"role": "assistant", "content": ai_response})
                 
