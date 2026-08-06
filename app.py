@@ -61,7 +61,7 @@ OUTPUT STRUCTURE:
 
 def get_system_prompt(mode: str, language: str) -> str:
     """Combines the shared safety foundation with the requested persona and language directive."""
-    persona = PERSONA_AYURVEDA if mode == "Ayurveda" else PERSONA_ALLOPATHY
+    persona = PERSONA_AYURVEDA if mode == "Ayurvedic" else PERSONA_ALLOPATHY
     language_directive = f"\n\nCRITICAL LANGUAGE RULE: You MUST output the entire response exclusively in {language}."
     return BASE_SAFETY_CORE + persona + language_directive
 
@@ -232,7 +232,9 @@ if st.session_state.clinic_mode is not None:
             st.rerun()
     st.write("---")
     
+    # Capture variables for the API Call
     selected_language = st.session_state.report_language
+    selected_mode = st.session_state.clinic_mode
 
 if st.session_state.clinic_mode == "Ayurvedic":
     current_logo = logo_base64
@@ -242,23 +244,6 @@ if st.session_state.clinic_mode == "Ayurvedic":
     pdf_hospital_name = "Achala Digital Vaidya"
     pdf_sub_header = "Digital Vaidya • Advanced Visual Analysis Report"
     pdf_footer_text = "Guided by the Ayurvedic principles of Shri Rajiv Dixit Ji."
-    SYSTEM_PROMPT = """
-    You are an Educational Medical Report Assistant for Achala Digital Vaidya.
-    Your role is purely to translate, explain, and summarize the patient's existing hospital document into simple terms for patient literacy.
-
-    STRICT SAFETY RULES:
-    1. Do NOT evaluate, alter, or judge active pharmaceutical prescriptions or controlled medications.
-    2. Provide simple, educational language translations of medical terms (e.g., explaining 'Spondylosis' or 'Osteoarthritis').
-    3. Keep all advice strictly educational and general. Always advise the patient to follow their treating physician's prescription.
-    You are Rajiv Dixit AI, an expert consultant in Ayurveda and Vata-induced joint pain. Your goal is to help the common man reverse chronic back and joint pain using accessible, budget-friendly kitchen remedies.
-    Follow these rules strictly:
-    1. Identify if the user's symptoms point to a Vata imbalance.
-    2. Recommend affordable home remedies based on Rajiv Dixit's protocols (Parijat decoction, Chuna, Methi Dana).
-    3. SAFETY GUARDRAIL: You MUST explicitly check if the user has a history of kidney stones or gallstones BEFORE recommending Chuna (Edible Limestone). If they answer yes, strictly forbid Chuna.
-    4. Enforce foundational lifestyle rules: sit down while drinking water (sip by sip), completely eliminate refined oils.
-    5. Keep your tone compassionate, simple, and professional.
-    6. NEVER use numbered lists (1, 2, 3...) for patient details. Use Markdown subheadings (e.g., ### Patient Information) and bullet points.
-    """
 
 elif st.session_state.clinic_mode == "Allopathic":
     current_logo = allopathic_logo_base64 
@@ -268,23 +253,6 @@ elif st.session_state.clinic_mode == "Allopathic":
     pdf_hospital_name = "Clinical Translation Portal"
     pdf_sub_header = "Evidence-Based Medical Analysis Report"
     pdf_footer_text = "Disclaimer: This report is a simplified explanation of complex clinical findings for educational use."
-    SYSTEM_PROMPT = """
-    You are an Educational Medical Report Assistant for Achala Digital Vaidya.
-    Your role is purely to translate, explain, and summarize the patient's existing hospital document into simple terms for patient literacy.
-
-    STRICT SAFETY RULES:
-    1. Do NOT evaluate, alter, or judge active pharmaceutical prescriptions or controlled medications.
-    2. Provide simple, educational language translations of medical terms (e.g., explaining 'Spondylosis' or 'Osteoarthritis').
-    3. Keep all advice strictly educational and general. Always advise the patient to follow their treating physician's prescription.
-    You are a highly professional Clinical Translation Assistant working for an Orthopedic Hospital.
-    Your sole job is to translate complex English medical reports, MRIs, and X-ray summaries into simple, easy-to-understand regional languages for the patient.
-    Follow these rules strictly:
-    1. STRICT RULE: DO NOT recommend alternative medicines, Ayurvedic herbs, or home remedies. 
-    2. STRICT RULE: Always reinforce the doctor's prescribed treatment plan (e.g., Physiotherapy, Surgery, NSAIDs).
-    3. Break down complex medical jargon into simple analogies.
-    4. Keep the tone clinical, reassuring, and highly respectful of modern evidence-based medicine.
-    5. NEVER use numbered lists (1, 2, 3...) for patient details. Use Markdown subheadings (e.g., ### Patient Information) and bullet points.
-    """
 
 dynamic_header_html = f"""
 <div style="display: flex; flex-direction: column; align-items: center; text-align: center; padding-bottom: 10px;">
@@ -308,27 +276,9 @@ st.markdown(dynamic_header_html, unsafe_allow_html=True)
 
 st.info("💡 **Tip for Best Results:** For faster processing and privacy, you may crop or obscure personal details like phone numbers and patient names before uploading.")
 
-# 2. Inject it into your existing session state logic
+# Safely initialize session states without NameErrors
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": dynamic_system_prompt}]
-else:
-    # Overwrite the old system prompt if the user changed the language or mode
-    st.session_state.messages[0] = {"role": "system", "content": dynamic_system_prompt}
-
-# 3. Your existing chat rendering loop
-for message in st.session_state.messages:
-    if message["role"] == "system":
-        continue
-    with st.chat_message(message["role"]):
-        if isinstance(message["content"], str):
-            st.markdown(message["content"])
-        elif isinstance(message["content"], list):
-            for item in message["content"]:
-                if item["type"] == "text":
-                    st.markdown(item["text"])
-                elif item["type"] == "image_url":
-                    st.caption("📎 *Image/Report Attached*")
-
+    st.session_state.messages = []
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = []
 if "analyzed_files" not in st.session_state:
@@ -339,6 +289,20 @@ if "payment_step" not in st.session_state:
     st.session_state.payment_step = "start" 
 if "uploader_key" not in st.session_state:
     st.session_state.uploader_key = 0
+
+# Your existing chat rendering loop (safely skips system logic)
+for message in st.session_state.messages:
+    if message.get("role") == "system":
+        continue
+    with st.chat_message(message["role"]):
+        if isinstance(message["content"], str):
+            st.markdown(message["content"])
+        elif isinstance(message["content"], list):
+            for item in message["content"]:
+                if item["type"] == "text":
+                    st.markdown(item["text"])
+                elif item["type"] == "image_url":
+                    st.caption("📎 *Image/Report Attached*")
 
 uploaded_file = None
 
@@ -354,12 +318,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # ---------------------------------------------------------
 # PREMIUM FEATURE: RAZORPAY URL REDIRECT & LOGGING
 # ---------------------------------------------------------
 
-# 1. Listen for Razorpay returning the user to the app after payment
 query_params = st.query_params
 payment_status = query_params.get("razorpay_payment_link_status")
 payment_id = query_params.get("razorpay_payment_id")
@@ -367,7 +329,6 @@ payment_id = query_params.get("razorpay_payment_id")
 if payment_status == "paid":
     st.session_state.premium_unlocked = True
     
-    # Securely log it to Supabase so it's on record
     if payment_id and "ledger_logged" not in st.session_state:
         try:
             supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
@@ -377,13 +338,12 @@ if payment_status == "paid":
             }).execute()
             st.session_state.ledger_logged = True
         except Exception:
-            pass # Fails silently without bothering the user
+            pass 
 
 
 if not st.session_state.premium_unlocked:
     st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and get a downloadable PDF. (Fee: ₹49)")
     
-    # --- UI STATE 1: GENERATE LINK ---
     if st.session_state.payment_step == "start":
         if st.button("Generate Secure Payment Link", type="primary", use_container_width=True):
             with st.spinner("Connecting to secure payment gateway..."):
@@ -394,11 +354,8 @@ if not st.session_state.premium_unlocked:
                     st.session_state.payment_step = "pending"
                     st.rerun()
 
-    # --- UI STATE 2: WAITING FOR USER TO CLICK ---
     elif st.session_state.payment_step == "pending":
         st.warning("⏳ **Payment link generated!** Click the button below to pay securely.")
-        
-        # Native Streamlit Link Button for smooth redirect
         st.link_button("Proceed to Pay ₹49", st.session_state.razorpay_url, type="primary", use_container_width=True)
         st.info("After completing the payment on Razorpay, you will automatically be redirected back here to unlock your analysis.")
         
@@ -472,12 +429,12 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
             })
 
-# 1. Append the user's message to the session state history
+    # 1. Append the user's message to the session state history
     st.session_state.messages.append({"role": "user", "content": message_content})
 
     # 2. Trigger the Assistant UI and API Call
     with st.chat_message("assistant"):
-       with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
+        with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
             try: 
                 # 1. Generate the structured prompt dynamically based on the UI state
                 dynamic_prompt = get_system_prompt(mode=selected_mode, language=selected_language)
@@ -485,7 +442,7 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 # 2. Build a fresh message list for this specific API call
                 api_messages = [
                     {"role": "system", "content": dynamic_prompt},
-                    {"role": "user", "content": message_content} # Your image and text payload
+                    {"role": "user", "content": message_content} 
                 ]
                 
                 # 3. Append your brilliant Multilingual Override Prompt
@@ -498,18 +455,17 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 response = client.chat.completions.create(
                     model="gpt-4o",
                     messages=api_messages,
-                    temperature=0.3, # Keeps the output formatting strict
+                    temperature=0.3, 
                 )
                 
                 ai_response = response.choices[0].message.content
                 
                 st.markdown(ai_response)
-                
                 st.session_state.messages.append({"role": "assistant", "content": ai_response})
                 
-            except Exception as e:
-                st.error(f"Error communicating with the Achala Intelligence Engine. Please try again. ({e})")
-                
+                # ==============================================================
+                # PDF GENERATION (Moved inside the TRY block, where it belongs!)
+                # ==============================================================
                 if uploaded_file is not None:
                     display_letterhead_report(ai_response, current_logo)
                     structured_html_content = markdown.markdown(ai_response, extensions=['extra', 'sane_lists', 'nl2br'])
@@ -643,10 +599,7 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                         mime="application/pdf",
                         type="primary"
                     )
-                
-                st.session_state.messages.append({"role": "assistant", "content": ai_response})
-                
-                if uploaded_file is not None:
+
                     st.session_state.analyzed_files.append(hashlib.md5(uploaded_file.getvalue()).hexdigest())
                     st.session_state.uploader_key += 1
                 
