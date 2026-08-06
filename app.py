@@ -413,16 +413,19 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
     st.session_state.messages.append({"role": "user", "content": message_content})
 
     with st.chat_message("assistant"):
-        with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
+       with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
             try: 
                 api_messages = st.session_state.messages.copy()
+                
+                # --- STRONGER MULTILINGUAL OVERRIDE PROMPT ---
                 api_messages.append({
                     "role": "system", 
-                    "content": f"CRITICAL TRANSLATION RULE: You MUST generate your ENTIRE response, including the report analysis, headings, and Ayurvedic recommendations, strictly in {selected_language}. Ensure medical terms are translated beautifully so the common man can understand."
+                    "content": f"CRITICAL INSTRUCTION: You are fully capable of speaking {selected_language}. The user requires this English medical document to be translated and explained entirely in {selected_language}. You MUST generate your ENTIRE response, including all headings, Ayurvedic remedies, and clinical explanations, strictly in {selected_language}. Do not output English."
                 })
                 
+                # --- UPGRADE MODEL TO gpt-4o ---
                 response = client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="gpt-4o", # Changed from gpt-4o-mini to the flagship omni model
                     messages=api_messages,
                     temperature=0.6,
                 )
