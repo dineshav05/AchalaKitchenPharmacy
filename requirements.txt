@@ -1,6 +1,6 @@
 streamlit
 openai
 markdown
-weasyprint==62.1
+weasyprint>=63.0
 supabase
 requests
