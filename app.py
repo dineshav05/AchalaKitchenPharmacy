@@ -462,31 +462,78 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                         <meta charset="utf-8">
                         <style>
                             {font_face_css}
-                            @page {{ size: A4; margin: 2cm; }}
+                            @page {{ 
+                                size: A4 portrait; 
+                                margin: 1.5cm; 
+                            }}
                             body {{ 
                                 font-family: {font_family}; 
                                 color: #2b2b2b; 
-                                font-size: 14px; 
+                                font-size: 13px; 
                                 line-height: 1.6; 
                             }}
-                            /* Force the Header to use a standard English font */
-                            .english-header h2, .english-header p {{ 
-                                font-family: 'Helvetica', 'Arial', sans-serif !important; 
-                            }}
-                            .english-header h2 {{ margin: 0; color: #0f4c5c; font-size: 26px; }}
-                            .english-header p {{ margin: 3px 0 0 0; color: #666; font-size: 13px; text-transform: uppercase; }}
                             
-                            .content-section h3 {{ color: #0f4c5c; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; margin-top: 25px; font-size: 18px; }}
-                            .footer-section {{ text-align: center; font-size: 11px; color: #888; border-top: 1px solid #e0e0e0; padding-top: 15px; margin-top: 40px; }}
+                            /* Strict image constraint rules for WeasyPrint */
+                            img {{
+                                max-width: 100%;
+                                height: auto;
+                            }}
+                            .logo-img {{
+                                width: 60px !important;
+                                max-width: 60px !important;
+                                height: auto !important;
+                                display: block;
+                            }}
+                            
+                            /* Header structure & typography */
+                            .header-table {{
+                                width: 100%;
+                                border-bottom: 2px solid #0f4c5c;
+                                padding-bottom: 12px;
+                                margin-bottom: 20px;
+                                table-layout: fixed;
+                            }}
+                            .english-header h2 {{ 
+                                font-family: 'Helvetica', 'Arial', sans-serif !important;
+                                margin: 0; 
+                                color: #0f4c5c; 
+                                font-size: 22px; 
+                                font-weight: bold;
+                                line-height: 1.2;
+                            }}
+                            .english-header p {{ 
+                                font-family: 'Helvetica', 'Arial', sans-serif !important;
+                                margin: 4px 0 0 0; 
+                                color: #555; 
+                                font-size: 11px; 
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                            }}
+                            
+                            .content-section h3 {{ 
+                                color: #0f4c5c; 
+                                border-bottom: 1px solid #e0e0e0; 
+                                padding-bottom: 4px; 
+                                margin-top: 20px; 
+                                font-size: 16px; 
+                            }}
+                            .footer-section {{ 
+                                text-align: center; 
+                                font-size: 10px; 
+                                color: #777; 
+                                border-top: 1px solid #e0e0e0; 
+                                padding-top: 12px; 
+                                margin-top: 30px; 
+                            }}
                         </style>
                     </head>
                     <body>
-                        <table style="width: 100%; border-bottom: 2px solid #0f4c5c; padding-bottom: 10px; margin-bottom: 20px;">
+                        <table class="header-table">
                             <tr>
-                                <td style="width: 15%; vertical-align: middle;">
-                                    <img src="data:image/png;base64,{current_logo}" width="70">
+                                <td style="width: 70px; vertical-align: middle;">
+                                    <img src="data:image/png;base64,{current_logo}" class="logo-img">
                                 </td>
-                                <td class="english-header" style="width: 85%; vertical-align: middle; text-align: left;">
+                                <td class="english-header" style="vertical-align: middle; text-align: left; padding-left: 10px;">
                                     <h2>{pdf_hospital_name}</h2>
                                     <p>{pdf_sub_header}</p>
                                 </td>
