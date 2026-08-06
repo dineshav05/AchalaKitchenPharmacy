@@ -308,9 +308,6 @@ st.markdown(dynamic_header_html, unsafe_allow_html=True)
 
 st.info("💡 **Tip for Best Results:** For faster processing and privacy, you may crop or obscure personal details like phone numbers and patient names before uploading.")
 
-# 1. THEN, generate the prompt using those variables
-dynamic_system_prompt = get_system_prompt(mode=selected_mode, language=selected_language)
-
 # 2. Inject it into your existing session state logic
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": dynamic_system_prompt}]
