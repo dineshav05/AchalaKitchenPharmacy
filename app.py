@@ -7,7 +7,7 @@ import base64
 import hashlib
 import markdown
 from io import BytesIO
-from xhtml2pdf import pisa
+from weasyprint import HTML, CSS
 from supabase import create_client, Client
 
 # ---------------------------------------------------------
@@ -437,18 +437,14 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     
                     # --- DYNAMIC FONT MAPPING FOR INDIC LANGUAGES ---
                     font_face_css = ""
-                    font_family = "'Helvetica', sans-serif"
+                    font_family = "sans-serif"
                     
                     indic_fonts = {
                         "Hindi": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf",
-                        "Marathi": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf",
                         "Kannada": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansKannada/NotoSansKannada-Regular.ttf",
-                        "Telugu": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansTelugu/NotoSansTelugu-Regular.ttf",
-                        "Tamil": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansTamil/NotoSansTamil-Regular.ttf",
-                        "Malayalam": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansMalayalam/NotoSansMalayalam-Regular.ttf"
+                        "Telugu": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansTelugu/NotoSansTelugu-Regular.ttf"
                     }
                     
-                    # If a regional language is selected, pull its specific Unicode font
                     if selected_language in indic_fonts:
                         font_url = indic_fonts[selected_language]
                         font_family = "'IndicFont', sans-serif"
@@ -460,16 +456,27 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                         """
                         
                     report_html = f"""
+                    <!DOCTYPE html>
                     <html>
                     <head>
                         <meta charset="utf-8">
                         <style>
                             {font_face_css}
-                            @page {{ size: a4 portrait; margin: 2cm; }}
-                            body {{ font-family: {font_family}; color: #2b2b2b; font-size: 14px; line-height: 1.6; }}
+                            @page {{ size: A4; margin: 2cm; }}
+                            body {{ 
+                                font-family: {font_family}; 
+                                color: #2b2b2b; 
+                                font-size: 14px; 
+                                line-height: 1.6; 
+                            }}
+                            /* Force the Header to use a standard English font */
+                            .english-header h2, .english-header p {{ 
+                                font-family: 'Helvetica', 'Arial', sans-serif !important; 
+                            }}
+                            .english-header h2 {{ margin: 0; color: #0f4c5c; font-size: 26px; }}
+                            .english-header p {{ margin: 3px 0 0 0; color: #666; font-size: 13px; text-transform: uppercase; }}
+                            
                             .content-section h3 {{ color: #0f4c5c; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; margin-top: 25px; font-size: 18px; }}
-                            .content-section ul {{ padding-left: 15px; }}
-                            .content-section li {{ margin-bottom: 8px; }}
                             .footer-section {{ text-align: center; font-size: 11px; color: #888; border-top: 1px solid #e0e0e0; padding-top: 15px; margin-top: 40px; }}
                         </style>
                     </head>
@@ -479,9 +486,9 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                                 <td style="width: 15%; vertical-align: middle;">
                                     <img src="data:image/png;base64,{current_logo}" width="70">
                                 </td>
-                                <td style="width: 85%; vertical-align: middle; text-align: left;">
-                                    <h2 style="margin: 0; color: #0f4c5c; font-size: 26px; letter-spacing: 0.5px;">{pdf_hospital_name}</h2>
-                                    <p style="margin: 3px 0 0 0; color: #666; font-weight: bold; font-size: 13px; text-transform: uppercase;">{pdf_sub_header}</p>
+                                <td class="english-header" style="width: 85%; vertical-align: middle; text-align: left;">
+                                    <h2>{pdf_hospital_name}</h2>
+                                    <p>{pdf_sub_header}</p>
                                 </td>
                             </tr>
                         </table>
@@ -497,17 +504,16 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     </html>
                     """
                     
-                    pdf_buffer = BytesIO()
-                    pisa_status = pisa.CreatePDF(report_html, dest=pdf_buffer)
+                    # Use WeasyPrint to generate the PDF natively with proper text shaping
+                    pdf_bytes = HTML(string=report_html).write_pdf()
                     
-                    if not pisa_status.err:
-                        st.download_button(
-                            label="📄 Download Official PDF Report",
-                            data=pdf_buffer.getvalue(),
-                            file_name="Medical_Analysis_Report.pdf",
-                            mime="application/pdf",
-                            type="primary"
-                        )
+                    st.download_button(
+                        label="📄 Download Official PDF Report",
+                        data=pdf_bytes,
+                        file_name=f"Achala_Vaidya_Report_{selected_language}.pdf",
+                        mime="application/pdf",
+                        type="primary"
+                    )
                     else:
                         st.error("⚠️ Error generating the PDF report. Please try again.")
                 else:

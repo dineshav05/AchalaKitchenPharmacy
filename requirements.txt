@@ -1,6 +1,6 @@
 streamlit
 openai
 markdown
-xhtml2pdf
+weasyprint==62.1
 supabase
 requests
