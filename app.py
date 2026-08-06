@@ -435,13 +435,38 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     display_letterhead_report(ai_response, current_logo)
                     structured_html_content = markdown.markdown(ai_response, extensions=['extra', 'sane_lists', 'nl2br'])
                     
+                    # --- DYNAMIC FONT MAPPING FOR INDIC LANGUAGES ---
+                    font_face_css = ""
+                    font_family = "'Helvetica', sans-serif"
+                    
+                    indic_fonts = {
+                        "Hindi": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf",
+                        "Marathi": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf",
+                        "Kannada": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansKannada/NotoSansKannada-Regular.ttf",
+                        "Telugu": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansTelugu/NotoSansTelugu-Regular.ttf",
+                        "Tamil": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansTamil/NotoSansTamil-Regular.ttf",
+                        "Malayalam": "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansMalayalam/NotoSansMalayalam-Regular.ttf"
+                    }
+                    
+                    # If a regional language is selected, pull its specific Unicode font
+                    if selected_language in indic_fonts:
+                        font_url = indic_fonts[selected_language]
+                        font_family = "'IndicFont', sans-serif"
+                        font_face_css = f"""
+                        @font-face {{
+                            font-family: 'IndicFont';
+                            src: url('{font_url}');
+                        }}
+                        """
+                        
                     report_html = f"""
                     <html>
                     <head>
                         <meta charset="utf-8">
                         <style>
+                            {font_face_css}
                             @page {{ size: a4 portrait; margin: 2cm; }}
-                            body {{ font-family: 'Helvetica', sans-serif; color: #2b2b2b; font-size: 14px; line-height: 1.6; }}
+                            body {{ font-family: {font_family}; color: #2b2b2b; font-size: 14px; line-height: 1.6; }}
                             .content-section h3 {{ color: #0f4c5c; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; margin-top: 25px; font-size: 18px; }}
                             .content-section ul {{ padding-left: 15px; }}
                             .content-section li {{ margin-bottom: 8px; }}
