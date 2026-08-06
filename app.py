@@ -514,10 +514,6 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                         mime="application/pdf",
                         type="primary"
                     )
-                    else:
-                        st.error("⚠️ Error generating the PDF report. Please try again.")
-                else:
-                    st.markdown(ai_response)
                 
                 st.session_state.messages.append({"role": "assistant", "content": ai_response})
                 
