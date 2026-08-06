@@ -308,17 +308,21 @@ st.markdown(dynamic_header_html, unsafe_allow_html=True)
 
 st.info("💡 **Tip for Best Results:** For faster processing and privacy, you may crop or obscure personal details like phone numbers and patient names before uploading.")
 
-# 1. Generate the dynamic prompt based on the user's current UI selections
+# 1. First, define the variables from the user's UI selection
+selected_mode = st.selectbox("Select Treatment Mode", ["Ayurveda", "Allopathy"])
+selected_language = st.selectbox("Select Language", ["English", "Hindi", "Kannada", "Telugu"])
+
+# 2. THEN, generate the prompt using those variables
 dynamic_system_prompt = get_system_prompt(mode=selected_mode, language=selected_language)
 
-# 2. Inject it into your existing session state logic
+# 3. Inject it into your existing session state logic
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": dynamic_system_prompt}]
 else:
     # Overwrite the old system prompt if the user changed the language or mode
     st.session_state.messages[0] = {"role": "system", "content": dynamic_system_prompt}
 
-# 3. Your existing chat rendering loop
+# 4. Your existing chat rendering loop
 for message in st.session_state.messages:
     if message["role"] == "system":
         continue
