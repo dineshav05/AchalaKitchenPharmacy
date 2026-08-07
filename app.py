@@ -402,14 +402,14 @@ if not st.session_state.premium_unlocked:
 else:
     st.success("✅ Payment Verified! Premium Features Unlocked.")
     
-uploaded_files = st.file_uploader(
+    uploaded_files = st.file_uploader(
         "Upload your medical report(s) or joint image(s) here:", 
         type=["png", "jpg", "jpeg"], 
         accept_multiple_files=True,
         key=f"uploader_{st.session_state.uploader_key}"
     )
     
-    if uploaded_files: # This checks if the list has at least one file
+    if uploaded_files:
         all_new = True
         for file in uploaded_files:
             file_hash = hashlib.md5(file.getvalue()).hexdigest()
@@ -418,8 +418,7 @@ uploaded_files = st.file_uploader(
                 all_new = False
                 
         if all_new:
-            st.success("✅ Images loaded successfully! Please type your symptoms in the chat box below and hit Send to begin.")   
-
+            st.success("✅ Images loaded successfully! Please type your symptoms in the chat box below and hit Send to begin.")
 
 def encode_image(upload):
     return base64.b64encode(upload.getvalue()).decode('utf-8')
