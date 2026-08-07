@@ -1,15 +1,44 @@
 import time
+import base64
+import hashlib
+from io import BytesIO
+
 import streamlit as st
 import requests
 from requests.auth import HTTPBasicAuth
-from PIL import Image
-from openai import OpenAI
-import base64
-import hashlib
 import markdown
-from io import BytesIO
-from weasyprint import HTML, CSS
-from supabase import create_client, Client
+
+# ==========================================
+# ⚡ OPTIMIZED ASSET & CLIENT CACHING
+# ==========================================
+
+@st.cache_resource
+def init_openai_client():
+    """Delays importing OpenAI until needed and caches the connection."""
+    from openai import OpenAI
+    api_key = st.secrets.get("OPENAI_API_KEY")
+    if not api_key:
+        return None
+    return OpenAI(api_key=api_key)
+
+@st.cache_resource
+def init_supabase_client():
+    """Delays importing Supabase and shares a single connection pool."""
+    from supabase import create_client, Client
+    url = st.secrets.get("SUPABASE_URL")
+    key = st.secrets.get("SUPABASE_KEY")
+    if url and key:
+        return create_client(url, key)
+    return None
+
+@st.cache_data
+def get_base64_image(image_path):
+    """Caches UI images in memory so they only load from disk once."""
+    try:
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode('utf-8')
+    except FileNotFoundError:
+        return "" 
 
 # ==========================================
 # 🧠 AI PROMPT ARCHITECTURE
@@ -68,10 +97,8 @@ def get_system_prompt(mode: str, language: str) -> str:
     return BASE_SAFETY_CORE + persona + language_directive
 
 # ==========================================
-
-# ---------------------------------------------------------
 # RAZORPAY REST API (Bypasses library dependency issues) 
-# ---------------------------------------------------------
+# ==========================================
 def create_payment_link(receipt_id, customer_name="Patient"):
     url = "https://api.razorpay.com/v1/payment_links"
     unique_ref_id = f"ACHALA_ORDER_{int(time.time())}"
@@ -104,6 +131,9 @@ def create_payment_link(receipt_id, customer_name="Patient"):
         st.error(f"Payment gateway error: {e}")
         return None
 
+# ==========================================
+# PAGE CONFIGURATION & INITIALIZATION
+# ==========================================
 
 st.set_page_config(
     page_title="Achala Digital Vaidya | Clinical & Ayurvedic AI",
@@ -112,28 +142,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Use .get() so it doesn't crash if the key is missing
-api_key = st.secrets.get("OPENAI_API_KEY")
-
-if not api_key:
+# Initialize cached clients
+client = init_openai_client()
+if not client:
     st.error("OpenAI API Key is missing. Please set it in Streamlit Secrets.")
     st.stop()
 
-# Initialize the client
-client = OpenAI(api_key=api_key)
-
-# --- Base64 Image Encoder ---
-def get_base64_image(image_path):
-    try:
-        with open(image_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode('utf-8')
-    except FileNotFoundError:
-        return "" # Prevents crash if images aren't uploaded to github yet
-
-# --- Encode Both Logos ---
+# Encode Both Logos efficiently via cache
 logo_base64 = get_base64_image("Achala_Digital_Vaidya.png")
 allopathic_logo_base64 = get_base64_image("Allopatic_Clinic.png")
-
 
 # ---------------------------------------------------------
 # UNIFIED ROUTING & LANDING PAGE LOGIC
@@ -333,12 +350,13 @@ if payment_status == "paid":
     
     if payment_id and "ledger_logged" not in st.session_state:
         try:
-            supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
-            supabase.table("claimed_utrs").insert({
-                "utr_number": payment_id, 
-                "status": "PAID"
-            }).execute()
-            st.session_state.ledger_logged = True
+            supabase = init_supabase_client()
+            if supabase:
+                supabase.table("claimed_utrs").insert({
+                    "utr_number": payment_id, 
+                    "status": "PAID"
+                }).execute()
+                st.session_state.ledger_logged = True
         except Exception:
             pass 
 
@@ -591,7 +609,9 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     </html>
                     """
                     
-                    # Use WeasyPrint to generate the PDF natively with proper text shaping
+                    # ⚡ LAZY LOAD WEASYPRINT HERE
+                    # Loading it only at the moment of PDF generation drastically speeds up app startup
+                    from weasyprint import HTML
                     pdf_bytes = HTML(string=report_html).write_pdf()
                     
                     st.download_button(
