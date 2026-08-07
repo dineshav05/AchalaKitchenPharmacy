@@ -352,13 +352,18 @@ if payment_status == "paid":
         try:
             supabase = init_supabase_client()
             if supabase:
+                # Attempt to insert
                 supabase.table("claimed_utrs").insert({
                     "utr_number": payment_id, 
                     "status": "PAID"
                 }).execute()
                 st.session_state.ledger_logged = True
-        except Exception:
-            pass 
+        except Exception as e:
+            # THIS will show you exactly why it's failing on the screen!
+            st.error(f"Database Error: {e}")
+            
+    # Clear the URL parameters so a page refresh doesn't keep them unlocked
+    st.query_params.clear()
 
 
 if not st.session_state.premium_unlocked:
@@ -373,6 +378,14 @@ if not st.session_state.premium_unlocked:
                     st.session_state.razorpay_url = checkout_url
                     st.session_state.payment_step = "pending"
                     st.rerun()
+
+    if st.session_state.payment_step == "completed":
+        st.success("🎉 Thank you for trusting Achala Digital Vaidya!")
+        st.info("Your comprehensive medical dossier has been downloaded. We hope this brings clarity to your healing journey.")
+        
+        if st.button("Analyze Another Report", type="primary"):
+            st.session_state.payment_step = "start"
+            st.rerun()
 
     elif st.session_state.payment_step == "pending":
         st.warning("⏳ **Payment link generated!** Click the button below to pay securely.")
@@ -392,6 +405,7 @@ else:
     uploaded_file = st.file_uploader(
         "Upload your medical report or joint image here:", 
         type=["png", "jpg", "jpeg"],
+        accept_multiple_files=True,
         key=f"uploader_{st.session_state.uploader_key}"
     )
     
@@ -613,13 +627,20 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     # Loading it only at the moment of PDF generation drastically speeds up app startup
                     from weasyprint import HTML
                     pdf_bytes = HTML(string=report_html).write_pdf()
+
+                    def reset_for_next_patient():
+                        st.session_state.premium_unlocked = False
+                        st.session_state.payment_step = "completed"
+                        st.session_state.messages = [] # Clear the chat history
+                        st.session_state.uploader_key += 1
                     
                     st.download_button(
                         label="📄 Download Official PDF Report",
                         data=pdf_bytes,
                         file_name=f"Achala_Vaidya_Report_{selected_language}.pdf",
                         mime="application/pdf",
-                        type="primary"
+                        type="primary",
+                        on_click=reset_for_next_patient
                     )
 
                     st.session_state.analyzed_files.append(hashlib.md5(uploaded_file.getvalue()).hexdigest())
