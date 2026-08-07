@@ -364,15 +364,14 @@ if payment_status == "paid":
         try:
             supabase = init_supabase_client()
             if supabase:
+                # 🟢 Insert only utr_number to match your database schema
                 supabase.table("claimed_utrs").insert({
-                    "utr_number": payment_id, 
-                    "status": "PAID"
+                    "utr_number": str(payment_id)
                 }).execute()
                 st.session_state.ledger_logged = True
         except Exception as e:
             st.error(f"Database Error: {e}")
             
-    # Clear the URL parameters so a page refresh doesn't keep them unlocked
     st.query_params.clear()
 
 
