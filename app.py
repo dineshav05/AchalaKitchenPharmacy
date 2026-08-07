@@ -351,6 +351,7 @@ st.markdown(
 # ---------------------------------------------------------
 # PREMIUM FEATURE: RAZORPAY URL REDIRECT & LOGGING
 # ---------------------------------------------------------
+uploaded_files = []
 
 query_params = st.query_params
 payment_status = query_params.get("razorpay_payment_link_status")
