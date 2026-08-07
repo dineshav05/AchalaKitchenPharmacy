@@ -97,7 +97,7 @@ def get_system_prompt(mode: str, language: str) -> str:
     return BASE_SAFETY_CORE + persona + language_directive
 
 # ==========================================
-# RAZORPAY REST API (Bypasses library dependency issues) 
+# RAZORPAY REST API 
 # ==========================================
 def create_payment_link(receipt_id, customer_name="Patient"):
     url = "https://api.razorpay.com/v1/payment_links"
@@ -295,7 +295,9 @@ st.markdown(dynamic_header_html, unsafe_allow_html=True)
 
 st.info("💡 **Tip for Best Results:** For faster processing and privacy, you may crop or obscure personal details like phone numbers and patient names before uploading.")
 
-# Safely initialize session states without NameErrors
+# ---------------------------------------------------------
+# SESSION STATE INITIALIZATION & RESET LOGIC
+# ---------------------------------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "processed_files" not in st.session_state:
@@ -308,6 +310,17 @@ if "payment_step" not in st.session_state:
     st.session_state.payment_step = "start" 
 if "uploader_key" not in st.session_state:
     st.session_state.uploader_key = 0
+if "generated_pdf" not in st.session_state:
+    st.session_state.generated_pdf = None 
+
+def reset_for_next_patient():
+    """Clears the transient memory and loops back for the next report."""
+    st.session_state.premium_unlocked = False
+    st.session_state.payment_step = "completed"
+    st.session_state.messages = [] 
+    st.session_state.generated_pdf = None 
+    st.session_state.uploader_key += 1
+
 
 # Your existing chat rendering loop (safely skips system logic)
 for message in st.session_state.messages:
@@ -322,8 +335,6 @@ for message in st.session_state.messages:
                     st.markdown(item["text"])
                 elif item["type"] == "image_url":
                     st.caption("📎 *Image/Report Attached*")
-
-uploaded_file = None
 
 st.markdown(
     """
@@ -352,14 +363,12 @@ if payment_status == "paid":
         try:
             supabase = init_supabase_client()
             if supabase:
-                # Attempt to insert
                 supabase.table("claimed_utrs").insert({
                     "utr_number": payment_id, 
                     "status": "PAID"
                 }).execute()
                 st.session_state.ledger_logged = True
         except Exception as e:
-            # THIS will show you exactly why it's failing on the screen!
             st.error(f"Database Error: {e}")
             
     # Clear the URL parameters so a page refresh doesn't keep them unlocked
@@ -411,14 +420,21 @@ else:
     
     if uploaded_files:
         all_new = True
+        current_batch_hashes = set() 
+        
         for file in uploaded_files:
             file_hash = hashlib.md5(file.getvalue()).hexdigest()
-            if file_hash in st.session_state.analyzed_files:
-                st.warning(f"⚠️ {file.name} has already been analyzed. Please ignore or remove it.")
+            
+            # Check past history AND current batch for duplicates
+            if file_hash in st.session_state.analyzed_files or file_hash in current_batch_hashes:
+                st.warning(f"⚠️ Duplicate detected: {file.name}. Please remove the duplicate.")
                 all_new = False
+                
+            current_batch_hashes.add(file_hash)
                 
         if all_new:
             st.success("✅ Images loaded successfully! Please type your symptoms in the chat box below and hit Send to begin.")
+
 
 def encode_image(upload):
     return base64.b64encode(upload.getvalue()).decode('utf-8')
@@ -504,9 +520,9 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 st.session_state.messages.append({"role": "assistant", "content": ai_response})
                 
                 # ==============================================================
-                # PDF GENERATION (Moved inside the TRY block, where it belongs!)
+                # PDF GENERATION 
                 # ==============================================================
-                if uploaded_file is not None:
+                if uploaded_files:
                     display_letterhead_report(ai_response, current_logo)
                     structured_html_content = markdown.markdown(ai_response, extensions=['extra', 'sane_lists', 'nl2br'])
                     
@@ -630,34 +646,38 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     """
                     
                     # ⚡ LAZY LOAD WEASYPRINT HERE
-                    # Loading it only at the moment of PDF generation drastically speeds up app startup
                     from weasyprint import HTML
                     pdf_bytes = HTML(string=report_html).write_pdf()
-
-                    def reset_for_next_patient():
-                        st.session_state.premium_unlocked = False
-                        st.session_state.payment_step = "completed"
-                        st.session_state.messages = [] # Clear the chat history
-                        st.session_state.uploader_key += 1
                     
-                    st.download_button(
-                        label="📄 Download Official PDF Report",
-                        data=pdf_bytes,
-                        file_name=f"Achala_Vaidya_Report_{selected_language}.pdf",
-                        mime="application/pdf",
-                        type="primary",
-                        on_click=reset_for_next_patient
-                    )
+                    # Save PDF to memory
+                    st.session_state.generated_pdf = pdf_bytes
 
-                   # Save all file hashes to prevent duplicate re-runs
-                    if uploaded_files:
-                        for file in uploaded_files:
-                            st.session_state.analyzed_files.append(hashlib.md5(file.getvalue()).hexdigest())
+                    # Save all file hashes to prevent duplicate re-runs
+                    for file in uploaded_files:
+                        st.session_state.analyzed_files.append(hashlib.md5(file.getvalue()).hexdigest())
                     
                     st.session_state.uploader_key += 1
+                    st.rerun() # Force app to refresh so the button appears securely below
                 
             except Exception as e: 
                 st.error(f"Error communicating with the Achala Intelligence Engine. Please try again. ({str(e)})")
+
+
+# ==========================================
+# PERSISTENT DOWNLOAD BUTTON
+# ==========================================
+# This stays on screen until the user clicks it or resets!
+if st.session_state.generated_pdf is not None:
+    st.markdown("---")
+    st.download_button(
+        label="📄 Download Official PDF Report",
+        data=st.session_state.generated_pdf,
+        file_name=f"Achala_Vaidya_Report_{selected_language}.pdf",
+        mime="application/pdf",
+        type="primary",
+        use_container_width=True,
+        on_click=reset_for_next_patient
+    )
 
 # ==========================================
 # FOOTER & COMPLIANCE LINKS
