@@ -627,3 +627,30 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 
             except Exception as e: 
                 st.error(f"Error communicating with the Achala Intelligence Engine. Please try again. ({str(e)})")
+
+# ==========================================
+# FOOTER & COMPLIANCE LINKS
+# ==========================================
+st.write("---") # Creates a clean visual divider
+
+# Create 4 balanced columns for a horizontal footer layout
+foot_col1, foot_col2, foot_col3, foot_col4 = st.columns(4)
+
+with foot_col1:
+    st.page_link("pages/Contact_Us.py", label="Contact Us", icon="📞")
+with foot_col2:
+    st.page_link("pages/Terms_and_Conditions.py", label="Terms & Conditions", icon="📜")
+with foot_col3:
+    st.page_link("pages/Privacy_Policy.py", label="Privacy Policy", icon="🔒")
+with foot_col4:
+    st.page_link("pages/Refund_Policy.py", label="Refund Policy", icon="💳")
+
+# Standard Copyright Notice
+st.markdown(
+    """
+    <div style='text-align: center; color: #888888; margin-top: 20px; font-size: 12px;'>
+        © 2026 Achala Enterprises. All rights reserved.
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
