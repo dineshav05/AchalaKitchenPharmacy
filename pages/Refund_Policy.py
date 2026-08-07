@@ -1,6 +1,10 @@
+import streamlit as st
+
+# Wrap all the text inside st.markdown() using triple quotes (""")
+st.markdown("""
 # Cancellation and Refund Policy
 
-**Last Updated:** [07/08/2026]
+**Last Updated:** August 2026
 
 Achala Enterprises strives to provide a seamless and valuable experience through the Achala Digital Vaidya platform. Due to the digital nature of our service, our refund policy is strictly defined below.
 
@@ -24,5 +28,7 @@ If you believe you are eligible for a refund due to a system failure, please con
 * The date and time of the transaction.
 * A brief description of the error encountered.
 
+
 **5. Refund Processing Time**
 Once a refund request is verified and approved, it will be processed immediately from our end. Please allow **5 to 7 business days** for the amount to reflect in your original method of payment, depending on your bank's processing times.
+""")

@@ -1,6 +1,10 @@
+import streamlit as st
+
+# Wrap all the text inside st.markdown() using triple quotes (""")
+st.markdown("""
 # Privacy Policy
 
-**Last Updated:** [07/08/2026]
+**Last Updated:** August 2026
 
 Achala Enterprises ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use the Achala Digital Vaidya platform.
 
@@ -26,3 +30,4 @@ We implement industry-standard security measures to protect your data during tra
 
 **5. Contact Us**
 If you have questions or concerns about this Privacy Policy, please contact us at the details provided on our Contact Us page.
+""")

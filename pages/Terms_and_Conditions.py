@@ -1,6 +1,10 @@
+import streamlit as st
+
+# Wrap all the text inside st.markdown() using triple quotes (""")
+st.markdown("""
 # Terms and Conditions
 
-**Last Updated:** [07/08/2026]
+**Last Updated:** August 2026
 
 Welcome to Achala Digital Vaidya (accessible via `https://achala-digital-vaidya.streamlit.app/`), operated by Achala Enterprises. By using our application, you agree to comply with and be bound by the following terms and conditions.
 
@@ -21,3 +25,4 @@ To the maximum extent permitted by Indian law, Achala Enterprises and its founde
 
 **5. Modifications to the Service**
 Achala Enterprises reserves the right to modify or discontinue, temporarily or permanently, the service (or any part thereof) with or without notice.
+""")
