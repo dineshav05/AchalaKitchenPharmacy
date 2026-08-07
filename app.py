@@ -402,20 +402,23 @@ if not st.session_state.premium_unlocked:
 else:
     st.success("✅ Payment Verified! Premium Features Unlocked.")
     
-    uploaded_file = st.file_uploader(
-        "Upload your medical report or joint image here:", 
-        type=["png", "jpg", "jpeg"],
+uploaded_files = st.file_uploader(
+        "Upload your medical report(s) or joint image(s) here:", 
+        type=["png", "jpg", "jpeg"], 
         accept_multiple_files=True,
         key=f"uploader_{st.session_state.uploader_key}"
     )
     
-    if uploaded_file is not None:
-        file_hash = hashlib.md5(uploaded_file.getvalue()).hexdigest()
-        if file_hash in st.session_state.analyzed_files:
-            st.warning("⚠️ Kindly upload a report or image only once. This is a duplicate.")
-            uploaded_file = None 
-        else:
-            st.success("✅ Image loaded successfully! Please type your symptoms in the chat box below and hit Send to begin.")
+    if uploaded_files: # This checks if the list has at least one file
+        all_new = True
+        for file in uploaded_files:
+            file_hash = hashlib.md5(file.getvalue()).hexdigest()
+            if file_hash in st.session_state.analyzed_files:
+                st.warning(f"⚠️ {file.name} has already been analyzed. Please ignore or remove it.")
+                all_new = False
+                
+        if all_new:
+            st.success("✅ Images loaded successfully! Please type your symptoms in the chat box below and hit Send to begin.")   
 
 
 def encode_image(upload):
@@ -449,19 +452,23 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
     
     with st.chat_message("user"):
         st.markdown(user_input)
-        if uploaded_file:
-            st.image(uploaded_file, width=250)
+        if uploaded_files:
+            # Display all uploaded images in the chat
+            for file in uploaded_files:
+                st.image(file, width=250)
 
     message_content = [{"type": "text", "text": user_input}]
     
-    if uploaded_file is not None:
-        current_hash = hashlib.md5(uploaded_file.getvalue()).hexdigest()
-        if current_hash not in st.session_state.analyzed_files:
-            base64_image = encode_image(uploaded_file)
-            message_content.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
-            })
+    if uploaded_files:
+        # Loop through all files and attach them to the AI prompt
+        for file in uploaded_files:
+            current_hash = hashlib.md5(file.getvalue()).hexdigest()
+            if current_hash not in st.session_state.analyzed_files:
+                base64_image = encode_image(file)
+                message_content.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
+                })
 
     # 1. Append the user's message to the session state history
     st.session_state.messages.append({"role": "user", "content": message_content})
@@ -643,7 +650,11 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                         on_click=reset_for_next_patient
                     )
 
-                    st.session_state.analyzed_files.append(hashlib.md5(uploaded_file.getvalue()).hexdigest())
+                   # Save all file hashes to prevent duplicate re-runs
+                    if uploaded_files:
+                        for file in uploaded_files:
+                            st.session_state.analyzed_files.append(hashlib.md5(file.getvalue()).hexdigest())
+                    
                     st.session_state.uploader_key += 1
                 
             except Exception as e: 
