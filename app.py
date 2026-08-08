@@ -99,9 +99,12 @@ def get_system_prompt(mode: str, language: str) -> str:
 # ==========================================
 # RAZORPAY REST API 
 # ==========================================
-def create_payment_link(receipt_id, customer_name="Patient"):
+def create_payment_link(receipt_id, customer_name="Patient", mode="Allopathic", lang="English"):
     url = "https://api.razorpay.com/v1/payment_links"
     unique_ref_id = f"ACHALA_ORDER_{int(time.time())}"
+
+    # 🟢 FIX: Attach the user's choices directly to the return URL
+    callback_url = f"https://achala-digital-vaidya.streamlit.app/?clinic_mode={mode}&report_language={lang}"
 
     payload = {
         "amount": 4900,
@@ -112,7 +115,7 @@ def create_payment_link(receipt_id, customer_name="Patient"):
         "customer": {"name": customer_name},
         "notify": {"sms": False, "email": False},
         "reminder_enable": False,
-        "callback_url": "https://achala-digital-vaidya.streamlit.app/", 
+        "callback_url": callback_url, 
         "callback_method": "get"
     }
     try:
@@ -155,6 +158,14 @@ allopathic_logo_base64 = get_base64_image("Allopatic_Clinic.png")
 # ---------------------------------------------------------
 # UNIFIED ROUTING & LANDING PAGE LOGIC
 # ---------------------------------------------------------
+# 🟢 FIX: Intercept Razorpay's return URL to restore the exact language and mode
+query_params = st.query_params
+
+if "clinic_mode" in query_params:
+    st.session_state.clinic_mode = query_params.get("clinic_mode")
+if "report_language" in query_params:
+    st.session_state.report_language = query_params.get("report_language")
+
 if "clinic_mode" not in st.session_state:
     st.session_state.clinic_mode = None
 if "report_language" not in st.session_state:
@@ -351,6 +362,7 @@ st.markdown(
 # ---------------------------------------------------------
 # PREMIUM FEATURE: RAZORPAY URL REDIRECT & LOGGING
 # ---------------------------------------------------------
+# 🟢 FIX: Safely initialize this so free users can chat without crashing
 uploaded_files = []
 
 query_params = st.query_params
@@ -360,20 +372,31 @@ payment_id = query_params.get("razorpay_payment_id")
 if payment_status == "paid":
     st.session_state.premium_unlocked = True
     
-    if payment_id and "ledger_logged" not in st.session_state:
-        try:
-            supabase = init_supabase_client()
-            if supabase:
+    if "ledger_logged" not in st.session_state:
+        if not payment_id:
+            st.error("🚨 DEBUG: Payment status is 'paid', but 'razorpay_payment_id' is missing from the URL!")
+            st.stop()
+            
+        supabase = init_supabase_client()
+        
+        if supabase is None:
+            st.error("🚨 DEBUG: Supabase Client is None! Check your Streamlit Cloud Secrets for SUPABASE_URL and SUPABASE_KEY.")
+            st.stop()
+        else:
+            try:
+                # Attempt the insert
                 supabase.table("claimed_utrs").insert({
-                    "utr_number": payment_id, 
+                    "utr_number": str(payment_id), 
                     "status": "PAID"
                 }).execute()
+                
                 st.session_state.ledger_logged = True
-        except Exception as e:
-            st.error(f"Database Error: {e}")
-            st.stop() # 🟢 NEW: This freezes the app so the error doesn't vanish!
+                
+            except Exception as e:
+                st.error(f"🚨 DEBUG Database Error: {e}")
+                st.stop()
             
-    # Clear the URL parameters
+    # Clear the URL parameters only if everything above succeeded
     st.query_params.clear()
 
 
@@ -383,7 +406,13 @@ if not st.session_state.premium_unlocked:
     if st.session_state.payment_step == "start":
         if st.button("Generate Secure Payment Link", type="primary", use_container_width=True):
             with st.spinner("Connecting to secure payment gateway..."):
-                checkout_url = create_payment_link(receipt_id="ACHALA_ORDER_001")
+                
+                # 🟢 FIX: Send the current session variables into the function
+                checkout_url = create_payment_link(
+                    receipt_id="ACHALA_ORDER_001",
+                    mode=st.session_state.clinic_mode,
+                    lang=st.session_state.report_language
+                )
                 
                 if checkout_url:
                     st.session_state.razorpay_url = checkout_url
