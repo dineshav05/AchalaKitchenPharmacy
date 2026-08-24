@@ -461,7 +461,7 @@ if st.session_state.app_mode == "Triage":
     st.info("Describe your injury in the chat box below for immediate, free triage guidance. Your emergency PDF report will be generated for free.")
     
     if not st.session_state.premium_unlocked:
-        with st.expander("📸 Unlock Visual & X-Ray Analysis (₹99)"):
+        with st.expander("📸 Unlock Visual & X-Ray Analysis (₹99)", expanded=True):
             st.markdown("Upload a photo of the swelling or a clinic X-ray report for immediate AI decoding.")
             
             if st.session_state.payment_step == "start":
