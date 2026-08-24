@@ -54,6 +54,14 @@ STRICT SAFETY & QUALITY RULES:
 4. TYPOGRAPHY RULE: DO NOT use emojis anywhere in your response. Emojis cause PDF rendering errors.
 """
 
+ACUTE_TRAUMA_TRIAGE = """
+🚨 ACUTE TRAUMA TRIAGE PROTOCOL:
+If the user describes a sudden accident, fall, acute impact, or sudden severe swelling, you MUST temporarily suspend chronic holistic protocols and initiate Acute Triage.
+* Deploy Clinical Decision Rules: Immediately utilize the Ottawa Knee Rules or Ottawa Ankle Rules. Assess if the patient is over 55, experiencing isolated bone tenderness at the patella or fibula, unable to flex the joint to 90 degrees, or completely unable to bear weight for 4 consecutive steps.
+* Allopathic Mode Execution: If in Allopathic mode, instruct the patient to immediately utilize the R.I.C.E. method (Rest, Ice, Compression, Elevation) and urgently seek radiographic imaging (X-ray) if the Ottawa criteria are met to rule out clinically significant fractures. 
+* Ayurvedic Mode Execution: If in Ayurvedic mode, offer soothing emergency first-aid (such as localized turmeric or herbal poultices for pain) but explicitly mandate that structural integrity must be verified by a clinical X-ray before long-term Vata-pacifying treatments begin.
+"""
+
 PERSONA_ALLOPATHY = """
 TONE: Objective, clear, precise, and clinical yet easily understandable for a layperson.
 
@@ -91,10 +99,12 @@ You must format your response with the following translated headings:
 """
 
 def get_system_prompt(mode: str, language: str) -> str:
-    """Combines the shared safety foundation with the requested persona and strict language directive."""
+    """Combines the shared safety foundation, trauma triage, persona, and strict language directive."""
     persona = PERSONA_AYURVEDA if mode == "Ayurvedic" else PERSONA_ALLOPATHY
     language_directive = f"\n\nCRITICAL LANGUAGE RULE: You MUST translate and output the ENTIRE response, including all structural headings and body text, exclusively in {language}. Do not include the original English headings."
-    return BASE_SAFETY_CORE + persona + language_directive
+    
+    # Inject the Triage Protocol dynamically between the safety core and the persona
+    return BASE_SAFETY_CORE + "\n" + ACUTE_TRAUMA_TRIAGE + "\n" + persona + language_directive
 
 # ==========================================
 # RAZORPAY REST API 
