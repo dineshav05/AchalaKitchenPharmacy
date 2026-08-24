@@ -205,6 +205,20 @@ if st.session_state.clinic_mode is None:
     """, unsafe_allow_html=True)
     st.markdown("<h1 class='main-header'>Digital Clinic Workspace</h1>", unsafe_allow_html=True)
     
+    # --- PASTE THIS NEW BLOCK HERE ---
+    with st.expander("🩺 Understanding Your Care: Kitchen Pharmacy vs. Clinical Reality"):
+        st.markdown("""
+        **Modern diseases often require modern medicine to save a life, but ancient wisdom is required to sustain it. Here is how Achala Digital Vaidya supports your journey:**
+
+        * **Metabolic & Diabetes:** We guide you toward low-GI millets and metabolic balancing. *Clinical Reality:* You must continue medical monitoring for HbA1c levels.
+        * **Autoimmune & Arthritis:** We provide alkalizing, root-cause diets to reduce inflammation. *Clinical Reality:* Acute flare-ups require clinical management to prevent joint damage.
+        * **Severe Illness (e.g., Cancer):** We strictly offer foundational support for bodily resilience. *Clinical Reality:* Advanced oncology, surgery, and clinical care are absolutely **mandatory**.
+        * **Chronic Wear & Tear:** We suggest natural lubrication and calcium alignments. *Clinical Reality:* End-stage structural degradation may require medical intervention.
+        
+        *We decode your clinical reports so you understand your doctor's plan, while providing the traditional Ayurvedic lifestyle habits needed to support your foundational healing.*
+        """)
+    # ---------------------------------
+
     col1, col2, col3 = st.columns([1, 10, 1])
     
     with col2:
