@@ -107,20 +107,22 @@ def get_system_prompt(mode: str, language: str) -> str:
     return BASE_SAFETY_CORE + "\n" + ACUTE_TRAUMA_TRIAGE + "\n" + persona + language_directive
 
 # ==========================================
-# RAZORPAY REST API 
+# RAZORPAY REST API (Dynamic Pricing added)
 # ==========================================
-def create_payment_link(receipt_id, customer_name="Patient", mode="Allopathic", lang="English"):
+def create_payment_link(receipt_id, customer_name="Patient", mode="Allopathic", lang="English", app_mode="Workspace"):
     url = "https://api.razorpay.com/v1/payment_links"
     unique_ref_id = f"ACHALA_ORDER_{int(time.time())}"
 
-    # 🟢 FIX: Attach the user's choices directly to the return URL
-    callback_url = f"https://achala-digital-vaidya.streamlit.app/?clinic_mode={mode}&report_language={lang}"
+    # ⚡ Dynamic Pricing: ₹99 for Triage (9900 paise), ₹49 for Workspace (4900 paise)
+    price_in_paise = 9900 if app_mode == "Triage" else 4900
+
+    callback_url = f"https://achala-digital-vaidya.streamlit.app/?clinic_mode={mode}&report_language={lang}&app_mode={app_mode}"
 
     payload = {
-        "amount": 4900,
+        "amount": price_in_paise,
         "currency": "INR",
         "accept_partial": False,
-        "description": "Achala Digital Vaidya - Report Analysis",
+        "description": f"Achala Digital Vaidya - {app_mode} Analysis",
         "reference_id": unique_ref_id,
         "customer": {"name": customer_name},
         "notify": {"sms": False, "email": False},
@@ -168,18 +170,24 @@ allopathic_logo_base64 = get_base64_image("Allopatic_Clinic.png")
 # ---------------------------------------------------------
 # UNIFIED ROUTING & LANDING PAGE LOGIC
 # ---------------------------------------------------------
-# 🟢 FIX: Intercept Razorpay's return URL to restore the exact language and mode
 query_params = st.query_params
 
+if "app_mode" in query_params:
+    st.session_state.app_mode = query_params.get("app_mode")
 if "clinic_mode" in query_params:
     st.session_state.clinic_mode = query_params.get("clinic_mode")
 if "report_language" in query_params:
     st.session_state.report_language = query_params.get("report_language")
 
+if "app_mode" not in st.session_state:
+    st.session_state.app_mode = None
 if "clinic_mode" not in st.session_state:
     st.session_state.clinic_mode = None
 if "report_language" not in st.session_state:
     st.session_state.report_language = "English"
+
+def set_app_mode(mode):
+    st.session_state.app_mode = mode
 
 def set_clinic_mode(mode):
     st.session_state.clinic_mode = mode
@@ -188,34 +196,63 @@ st.markdown("""
     <style>
     .ecosystem-wrapper { display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }
     .ecosystem-header { color: #666; font-weight: bold; letter-spacing: 1px; font-size: 12px; background-color: #f0f2f6; padding: 8px 20px; border-radius: 20px; }
-    .main-header { text-align: center; margin-bottom: 30px; }
+    .main-header { text-align: center; margin-bottom: 30px; font-weight: bold; }
     .step-header { text-align: center; margin-bottom: 10px; }
 
+    .vibrant-card-triage { background: linear-gradient(135deg, #fff0f0 0%, #ffe6e6 100%); border: 2px solid #ffcccc; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
     .vibrant-card-ayurveda { background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%); border: 2px solid #ffe89e; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
     .vibrant-card-allopathic { background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%); border: 2px solid #b5d7ff; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
     
-    .vibrant-card-ayurveda:hover, .vibrant-card-allopathic:hover { transform: translateY(-4px); }
+    .vibrant-card-triage:hover, .vibrant-card-ayurveda:hover, .vibrant-card-allopathic:hover { transform: translateY(-4px); }
 
     .card-icon { font-size: 45px; margin-bottom: 10px; }
-    .card-title { color: #2c3e50; font-weight: bold; font-size: 20px; margin-bottom: 5px; }
-    .card-subtitle { color: #7f8c8d; font-style: italic; font-size: 14px; margin-bottom: 15px; }
-    .card-description { color: #34495e; font-size: 15px; line-height: 1.5; margin-bottom: 0px;}
+    .card-title { color: #2c3e50; font-weight: bold; font-size: 19px; margin-bottom: 5px; }
+    .card-subtitle { color: #7f8c8d; font-style: italic; font-size: 13px; margin-bottom: 15px; }
+    .card-description { color: #34495e; font-size: 14px; line-height: 1.5; margin-bottom: 0px;}
     
     button[kind="primary"], button[kind="secondary"] { border-radius: 12px !important; margin-top: 0px !important; }
     div[data-testid="column"] > div > div > div[data-testid="stVerticalBlock"] > div > div { margin-top: 5px !important; }
     </style>
     """, unsafe_allow_html=True)
 
-
-if st.session_state.clinic_mode is None:
+# GATEWAY 1: Select Triage or Workspace
+if st.session_state.app_mode is None:
     st.markdown("""
         <div class='ecosystem-wrapper'>
             <div class='ecosystem-header'>ACHALA ECOSYSTEM</div>
         </div>
     """, unsafe_allow_html=True)
+    st.markdown("<h2 class='main-header'>How can we help you today?</h2>", unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+            <div class='vibrant-card-triage'>
+                <div class='card-icon'>🚨</div>
+                <div class='card-title' style='color: #c0392b;'>Acute Trauma Triage</div>
+                <div class='card-subtitle' style='color: #e74c3c;'>Emergency & Injury Assessment</div>
+                <div class='card-description'>Immediate AI triage for sudden accidents, falls, sprains, or severe swelling.</div>
+            </div>
+            """, unsafe_allow_html=True)
+        st.button("Launch Triage Companion", key="btn_triage", use_container_width=True, type="primary", on_click=set_app_mode, args=("Triage",))
+
+    with col2:
+        st.markdown("""
+            <div class='vibrant-card-allopathic'>
+                <div class='card-icon'>🩺</div>
+                <div class='card-title'>Digital Clinical Workspace</div>
+                <div class='card-subtitle' style='color: #3498db;'>Chronic Care & Diagnostics</div>
+                <div class='card-description'>Decode medical reports and explore Ayurvedic or Allopathic care plans.</div>
+            </div>
+            """, unsafe_allow_html=True)
+        st.button("Launch Clinical Workspace", key="btn_workspace", use_container_width=True, on_click=set_app_mode, args=("Workspace",))
+        
+    st.stop()
+
+# GATEWAY 2: Workspace Setup (If Workspace Selected)
+if st.session_state.app_mode == "Workspace" and st.session_state.clinic_mode is None:
     st.markdown("<h1 class='main-header'>Digital Clinic Workspace</h1>", unsafe_allow_html=True)
     
-    # --- PASTE THIS NEW BLOCK HERE ---
     with st.expander("🩺 Understanding Your Care: Kitchen Pharmacy vs. Clinical Reality"):
         st.markdown("""
         **Modern diseases often require modern medicine to save a life, but ancient wisdom is required to sustain it. Here is how Achala Digital Vaidya supports your journey:**
@@ -227,10 +264,8 @@ if st.session_state.clinic_mode is None:
         
         *We decode your clinical reports so you understand your doctor's plan, while providing the traditional Ayurvedic lifestyle habits needed to support your foundational healing.*
         """)
-    # ---------------------------------
 
     col1, col2, col3 = st.columns([1, 10, 1])
-    
     with col2:
         st.markdown("<h3 class='step-header'>🌐 Step 1: Choose Report Language</h3>", unsafe_allow_html=True)
         st.info("The AI will automatically analyze your medical reports and reply in the language selected below.")
@@ -272,21 +307,25 @@ if st.session_state.clinic_mode is None:
                     
     st.stop()
 
+# GATEWAY 3: Triage Setup (Forces Allopathic for Safety)
+if st.session_state.app_mode == "Triage" and st.session_state.clinic_mode is None:
+     st.session_state.clinic_mode = "Allopathic"
+
 
 # ---------------------------------------------------------
-# ACTIVE CLINIC WORKSPACE
+# ACTIVE CLINIC / TRIAGE WORKSPACE
 # ---------------------------------------------------------
 if st.session_state.clinic_mode is not None:
     nav_col1, nav_col2 = st.columns([3, 1])
     with nav_col1:
-        st.markdown(f"<span style='color:#666; font-size: 14px;'>**Mode:** {st.session_state.clinic_mode} &nbsp;|&nbsp; **Language:** {st.session_state.report_language}</span>", unsafe_allow_html=True)
+        st.markdown(f"<span style='color:#666; font-size: 14px;'>**Mode:** {st.session_state.app_mode} - {st.session_state.clinic_mode} &nbsp;|&nbsp; **Language:** {st.session_state.report_language}</span>", unsafe_allow_html=True)
     with nav_col2:
         if st.button("⚙️ Settings", use_container_width=True):
             st.session_state.clinic_mode = None
+            st.session_state.app_mode = None
             st.rerun()
     st.write("---")
     
-    # Capture variables for the API Call
     selected_language = st.session_state.report_language
     selected_mode = st.session_state.clinic_mode
 
@@ -298,8 +337,7 @@ if st.session_state.clinic_mode == "Ayurvedic":
     pdf_hospital_name = "Achala Digital Vaidya"
     pdf_sub_header = "Digital Vaidya • Advanced Visual Analysis Report"
     pdf_footer_text = "Guided by the Ayurvedic principles of Shri Rajiv Dixit Ji."
-
-elif st.session_state.clinic_mode == "Allopathic":
+else:
     current_logo = allopathic_logo_base64 
     brand_title = "Patient Education & Clinical Translator"
     brand_badge = "EVIDENCE-BASED AI"
@@ -325,9 +363,7 @@ dynamic_header_html = f"""
 </div>
 <hr style="opacity: 0.2; margin-bottom: 10px;">
 """
-
 st.markdown(dynamic_header_html, unsafe_allow_html=True)
-
 st.info("💡 **Tip for Best Results:** For faster processing and privacy, you may crop or obscure personal details like phone numbers and patient names before uploading.")
 
 # ---------------------------------------------------------
@@ -349,7 +385,6 @@ if "generated_pdf" not in st.session_state:
     st.session_state.generated_pdf = None 
 
 def reset_for_next_patient():
-    """Clears the transient memory and loops back for the next report."""
     st.session_state.premium_unlocked = False
     st.session_state.payment_step = "completed"
     st.session_state.messages = [] 
@@ -357,7 +392,6 @@ def reset_for_next_patient():
     st.session_state.uploader_key += 1
 
 
-# Your existing chat rendering loop (safely skips system logic)
 for message in st.session_state.messages:
     if message.get("role") == "system":
         continue
@@ -386,8 +420,7 @@ st.markdown(
 # ---------------------------------------------------------
 # PREMIUM FEATURE: RAZORPAY URL REDIRECT & LOGGING
 # ---------------------------------------------------------
-# 🟢 FIX: Safely initialize this so free users can chat without crashing
-uploaded_files = []
+uploaded_files = None
 
 query_params = st.query_params
 payment_status = query_params.get("razorpay_payment_link_status")
@@ -402,93 +435,124 @@ if payment_status == "paid":
             st.stop()
             
         supabase = init_supabase_client()
-        
         if supabase is None:
             st.error("🚨 DEBUG: Supabase Client is None! Check your Streamlit Cloud Secrets for SUPABASE_URL and SUPABASE_KEY.")
             st.stop()
         else:
             try:
-                # Attempt the insert
                 supabase.table("claimed_utrs").insert({
                     "utr_number": str(payment_id), 
                     "status": "PAID"
                 }).execute()
-                
                 st.session_state.ledger_logged = True
-                
             except Exception as e:
                 st.error(f"🚨 DEBUG Database Error: {e}")
                 st.stop()
             
-    # Clear the URL parameters only if everything above succeeded
     st.query_params.clear()
 
 
-if not st.session_state.premium_unlocked:
-    st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and get a downloadable PDF. (Fee: ₹49)")
-    
-    if st.session_state.payment_step == "start":
-        if st.button("Generate Secure Payment Link", type="primary", use_container_width=True):
-            with st.spinner("Connecting to secure payment gateway..."):
-                
-                # 🟢 FIX: Send the current session variables into the function
-                checkout_url = create_payment_link(
-                    receipt_id="ACHALA_ORDER_001",
-                    mode=st.session_state.clinic_mode,
-                    lang=st.session_state.report_language
-                )
-                
-                if checkout_url:
-                    st.session_state.razorpay_url = checkout_url
-                    st.session_state.payment_step = "pending"
-                    st.rerun()
-
-    if st.session_state.payment_step == "completed":
-        st.success("🎉 Thank you for trusting Achala Digital Vaidya!")
-        st.info("Your comprehensive medical dossier has been downloaded. We hope this brings clarity to your healing journey.")
-        
-        if st.button("Analyze Another Report", type="primary"):
-            st.session_state.payment_step = "start"
-            st.rerun()
-
-    elif st.session_state.payment_step == "pending":
-        st.warning("⏳ **Payment link generated!** Click the button below to pay securely.")
-        st.link_button("Proceed to Pay ₹49", st.session_state.razorpay_url, type="primary", use_container_width=True)
-        st.info("After completing the payment on Razorpay, you will automatically be redirected back here to unlock your analysis.")
-        
-        if st.button("Cancel"):
-            st.session_state.payment_step = "start"
-            st.rerun()
-
 # ---------------------------------------------------------
-# STATE 3: PREMIUM UNLOCKED & FILE UPLOADER
+# STATE MANAGEMENT: PREMIUM UNLOCKED & FILE UPLOADER
 # ---------------------------------------------------------
-else:
-    st.success("✅ Payment Verified! Premium Features Unlocked.")
+
+if st.session_state.app_mode == "Triage":
+    st.markdown("### 🚨 Emergency Triage Companion")
+    st.info("Describe your injury in the chat box below for immediate, free triage guidance. Your emergency PDF report will be generated for free.")
     
-    uploaded_files = st.file_uploader(
-        "Upload your medical report(s) or joint image(s) here:", 
-        type=["png", "jpg", "jpeg"], 
-        accept_multiple_files=True,
-        key=f"uploader_{st.session_state.uploader_key}"
-    )
-    
-    if uploaded_files:
-        all_new = True
-        current_batch_hashes = set() 
-        
-        for file in uploaded_files:
-            file_hash = hashlib.md5(file.getvalue()).hexdigest()
+    if not st.session_state.premium_unlocked:
+        with st.expander("📸 Unlock Visual & X-Ray Analysis (₹99)"):
+            st.markdown("Upload a photo of the swelling or a clinic X-ray report for immediate AI decoding.")
             
-            # Check past history AND current batch for duplicates
-            if file_hash in st.session_state.analyzed_files or file_hash in current_batch_hashes:
-                st.warning(f"⚠️ Duplicate detected: {file.name}. Please remove the duplicate.")
-                all_new = False
-                
-            current_batch_hashes.add(file_hash)
-                
-        if all_new:
-            st.success("✅ Images loaded successfully! Please type your symptoms in the chat box below and hit Send to begin.")
+            if st.session_state.payment_step == "start":
+                if st.button("Generate Secure Payment Link (₹99)", type="primary", key="triage_pay_btn"):
+                    with st.spinner("Connecting to secure payment gateway..."):
+                        checkout_url = create_payment_link(
+                            receipt_id="ACHALA_TRIAGE_001",
+                            mode="Allopathic", 
+                            lang=st.session_state.report_language,
+                            app_mode="Triage"
+                        )
+                        if checkout_url:
+                            st.session_state.razorpay_url = checkout_url
+                            st.session_state.payment_step = "pending"
+                            st.rerun()
+                            
+            elif st.session_state.payment_step == "pending":
+                st.warning("⏳ **Payment link generated!** Click below to pay securely.")
+                st.link_button("Proceed to Pay ₹99", st.session_state.razorpay_url, type="primary", use_container_width=True)
+                if st.button("Cancel", key="cancel_triage_btn"):
+                    st.session_state.payment_step = "start"
+                    st.rerun()
+                    
+            elif st.session_state.payment_step == "completed":
+                 if st.button("Analyze Another Report", type="primary"):
+                     st.session_state.payment_step = "start"
+                     st.rerun()
+    else:
+        st.success("✅ Payment Verified! Premium Visual Triage Unlocked.")
+        uploaded_files = st.file_uploader(
+            "Upload emergency image or report", 
+            type=["png", "jpg", "jpeg"], 
+            accept_multiple_files=True,
+            key=f"uploader_{st.session_state.uploader_key}"
+        )
+
+elif st.session_state.app_mode == "Workspace":
+    if not st.session_state.premium_unlocked:
+        st.info("🔒 **Premium Feature:** Upload a photo of your joint or a medical report for deep visual analysis and get a downloadable PDF. (Fee: ₹49)")
+        
+        if st.session_state.payment_step == "start":
+            if st.button("Generate Secure Payment Link (₹49)", type="primary", use_container_width=True):
+                with st.spinner("Connecting to secure payment gateway..."):
+                    checkout_url = create_payment_link(
+                        receipt_id="ACHALA_ORDER_001",
+                        mode=st.session_state.clinic_mode,
+                        lang=st.session_state.report_language,
+                        app_mode="Workspace"
+                    )
+                    if checkout_url:
+                        st.session_state.razorpay_url = checkout_url
+                        st.session_state.payment_step = "pending"
+                        st.rerun()
+
+        elif st.session_state.payment_step == "completed":
+            st.success("🎉 Thank you for trusting Achala Digital Vaidya!")
+            st.info("Your comprehensive medical dossier has been downloaded. We hope this brings clarity to your healing journey.")
+            if st.button("Analyze Another Report", type="primary"):
+                st.session_state.payment_step = "start"
+                st.rerun()
+
+        elif st.session_state.payment_step == "pending":
+            st.warning("⏳ **Payment link generated!** Click the button below to pay securely.")
+            st.link_button("Proceed to Pay ₹49", st.session_state.razorpay_url, type="primary", use_container_width=True)
+            st.info("After completing the payment on Razorpay, you will automatically be redirected back here to unlock your analysis.")
+            if st.button("Cancel"):
+                st.session_state.payment_step = "start"
+                st.rerun()
+    else:
+        st.success("✅ Payment Verified! Premium Features Unlocked.")
+        uploaded_files = st.file_uploader(
+            "Upload your medical report(s) or joint image(s) here:", 
+            type=["png", "jpg", "jpeg"], 
+            accept_multiple_files=True,
+            key=f"uploader_{st.session_state.uploader_key}"
+        )
+
+# Ensure duplicate check and success prompt applies to both modes if unlocked
+if uploaded_files:
+    all_new = True
+    current_batch_hashes = set() 
+    
+    for file in uploaded_files:
+        file_hash = hashlib.md5(file.getvalue()).hexdigest()
+        if file_hash in st.session_state.analyzed_files or file_hash in current_batch_hashes:
+            st.warning(f"⚠️ Duplicate detected: {file.name}. Please remove the duplicate.")
+            all_new = False
+        current_batch_hashes.add(file_hash)
+            
+    if all_new:
+        st.success("✅ Images loaded successfully! Please type your symptoms in the chat box below and hit Send to begin.")
 
 
 def encode_image(upload):
@@ -523,14 +587,12 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
     with st.chat_message("user"):
         st.markdown(user_input)
         if uploaded_files:
-            # Display all uploaded images in the chat
             for file in uploaded_files:
                 st.image(file, width=250)
 
     message_content = [{"type": "text", "text": user_input}]
     
     if uploaded_files:
-        # Loop through all files and attach them to the AI prompt
         for file in uploaded_files:
             current_hash = hashlib.md5(file.getvalue()).hexdigest()
             if current_hash not in st.session_state.analyzed_files:
@@ -540,29 +602,23 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
                 })
 
-    # 1. Append the user's message to the session state history
     st.session_state.messages.append({"role": "user", "content": message_content})
 
-    # 2. Trigger the Assistant UI and API Call
     with st.chat_message("assistant"):
         with st.spinner("Consulting the Achala Intelligence Engine... Please wait a few seconds."):
             try: 
-                # 1. Generate the structured prompt dynamically based on the UI state
                 dynamic_prompt = get_system_prompt(mode=selected_mode, language=selected_language)
                 
-                # 2. Build a fresh message list for this specific API call
                 api_messages = [
                     {"role": "system", "content": dynamic_prompt},
                     {"role": "user", "content": message_content} 
                 ]
                 
-                # 3. Append your brilliant Multilingual Override Prompt
                 api_messages.append({
                     "role": "system", 
                     "content": f"CRITICAL INSTRUCTION: You are fully capable of speaking {selected_language}. The user requires this English medical document to be translated and explained entirely in {selected_language}. You MUST generate your ENTIRE response, including all headings, Ayurvedic remedies, and clinical explanations, strictly in {selected_language}. Do not output English."
                 })
                 
-                # 4. Execute the API Call
                 response = client.chat.completions.create(
                     model="gpt-4o",
                     messages=api_messages,
@@ -577,11 +633,10 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 # ==============================================================
                 # PDF GENERATION 
                 # ==============================================================
-                if uploaded_files:
+                if uploaded_files or st.session_state.app_mode == "Triage": 
                     display_letterhead_report(ai_response, current_logo)
                     structured_html_content = markdown.markdown(ai_response, extensions=['extra', 'sane_lists', 'nl2br'])
                     
-                    # --- DYNAMIC FONT MAPPING FOR INDIC LANGUAGES ---
                     font_face_css = ""
                     font_family = "sans-serif"
                     
@@ -707,12 +762,12 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                     # Save PDF to memory
                     st.session_state.generated_pdf = pdf_bytes
 
-                    # Save all file hashes to prevent duplicate re-runs
-                    for file in uploaded_files:
-                        st.session_state.analyzed_files.append(hashlib.md5(file.getvalue()).hexdigest())
+                    if uploaded_files:
+                        for file in uploaded_files:
+                            st.session_state.analyzed_files.append(hashlib.md5(file.getvalue()).hexdigest())
                     
                     st.session_state.uploader_key += 1
-                    st.rerun() # Force app to refresh so the button appears securely below
+                    st.rerun() 
                 
             except Exception as e: 
                 st.error(f"Error communicating with the Achala Intelligence Engine. Please try again. ({str(e)})")
@@ -721,7 +776,6 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
 # ==========================================
 # PERSISTENT DOWNLOAD BUTTON
 # ==========================================
-# This stays on screen until the user clicks it or resets!
 if st.session_state.generated_pdf is not None:
     st.markdown("---")
     st.download_button(
@@ -737,9 +791,8 @@ if st.session_state.generated_pdf is not None:
 # ==========================================
 # FOOTER & COMPLIANCE LINKS
 # ==========================================
-st.write("---") # Creates a clean visual divider
+st.write("---") 
 
-# Create 4 balanced columns for a horizontal footer layout
 foot_col1, foot_col2, foot_col3, foot_col4 = st.columns(4)
 
 with foot_col1:
@@ -751,7 +804,6 @@ with foot_col3:
 with foot_col4:
     st.page_link("pages/Refund_Policy.py", label="Refund Policy", icon="💳")
 
-# Standard Copyright Notice
 st.markdown(
     """
     <div style='text-align: center; color: #888888; margin-top: 20px; font-size: 12px;'>
