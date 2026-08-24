@@ -326,7 +326,7 @@ if st.session_state.clinic_mode is not None:
     with nav_col1:
         st.markdown(f"<span style='color:#666; font-size: 14px;'>**Mode:** {st.session_state.app_mode} - {st.session_state.clinic_mode} &nbsp;|&nbsp; **Language:** {st.session_state.report_language}</span>", unsafe_allow_html=True)
     with nav_col2:
-        if st.button("⚙️ Settings", use_container_width=True):
+        if st.button("⬅️ Back to Main Menu", use_container_width=True):
             st.session_state.clinic_mode = None
             st.session_state.app_mode = None
             st.rerun()
