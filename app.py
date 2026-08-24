@@ -251,6 +251,12 @@ if st.session_state.app_mode is None:
 
 # GATEWAY 2: Workspace Setup (If Workspace Selected)
 if st.session_state.app_mode == "Workspace" and st.session_state.clinic_mode is None:
+    
+    # 🟢 FIX: Added Back Button to navigate from Workspace Setup back to Main Gateway
+    if st.button("⬅️ Back to Main Menu"):
+        st.session_state.app_mode = None
+        st.rerun()
+
     st.markdown("<h1 class='main-header'>Digital Clinic Workspace</h1>", unsafe_allow_html=True)
     
     with st.expander("🩺 Understanding Your Care: Kitchen Pharmacy vs. Clinical Reality"):
@@ -461,6 +467,7 @@ if st.session_state.app_mode == "Triage":
     st.info("Describe your injury in the chat box below for immediate, free triage guidance. Your emergency PDF report will be generated for free.")
     
     if not st.session_state.premium_unlocked:
+        # 🟢 FIX: Added expanded=True to keep accordion open by default
         with st.expander("📸 Unlock Visual & X-Ray Analysis (₹99)", expanded=True):
             st.markdown("Upload a photo of the swelling or a clinic X-ray report for immediate AI decoding.")
             
