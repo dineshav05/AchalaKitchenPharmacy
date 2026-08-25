@@ -725,7 +725,7 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                             /* Header structure & typography */
                             .header-table {{
                                 width: 100%;
-                                border-bottom: 3px solid #e74c3c; /* Emergency Red Accent */
+                                border-bottom: 3px solid #e74c3c; 
                                 padding-bottom: 12px;
                                 margin-bottom: 20px;
                                 table-layout: fixed;
@@ -748,46 +748,72 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                                 letter-spacing: 1px;
                             }}
                             
-                            /* Vibrant Content Sections */
+                            /* Vibrant Content Sections with SVG Icons */
                             .content-section h3 {{ 
                                 background-color: #2c3e50; /* Deep Medical Navy */
                                 color: #ffffff; 
-                                padding: 8px 15px; 
+                                padding: 10px 15px 10px 42px; /* Left padding makes room for icon */
                                 margin-top: 25px; 
                                 font-size: 15px; 
                                 border-radius: 6px;
                                 text-transform: uppercase;
                                 letter-spacing: 0.5px;
+                                background-repeat: no-repeat;
+                                background-position: 12px center;
+                                background-size: 20px 20px;
                             }}
                             
-                            /* Color-coded Warning Lists (Mimicking R.I.C.E blocks) */
+                            /* Dynamically map icons based on heading order (Works across all languages!) */
+                            /* Icon 1: Summary/Patient Details (Clipboard) */
+                            .content-section h3:nth-of-type(1) {{ background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>'); }}
+                            
+                            /* Icon 2: Observations/Aahara (Magnifying Glass/Search) */
+                            .content-section h3:nth-of-type(2) {{ background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>'); }}
+                            
+                            /* Icon 3: Clinical Context/Vihara (Star/Lightbulb) */
+                            .content-section h3:nth-of-type(3) {{ background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/></svg>'); }}
+                            
+                            /* Icon 4: Red Flags/Seek Care (Warning Alert - Overrides background to Red) */
+                            .content-section h3:nth-of-type(4) {{ background-color: #c0392b; background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>'); }}
+                            
+                            /* Icon 5: Doctor Questions (Chat Bubbles) */
+                            .content-section h3:nth-of-type(5) {{ background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>'); }}
+
+                            /* Color-coded Content Lists */
                             .content-section ul {{
                                 background-color: #ffffff;
-                                border-left: 5px solid #3498db; /* Clinical Blue Accent */
+                                border-left: 5px solid #3498db;
                                 padding: 15px 15px 15px 40px;
                                 border-radius: 0 8px 8px 0;
                                 box-shadow: 0 2px 5px rgba(0,0,0,0.05);
                                 margin-bottom: 15px;
                             }}
+                            .content-section li {{ margin-bottom: 8px; }}
+                            .content-section strong {{ color: #c0392b; }}
                             
-                            .content-section li {{
-                                margin-bottom: 8px;
-                            }}
-
-                            .content-section strong {{
-                                color: #c0392b; /* Highlights important medical terms in red */
-                            }}
-                            
+                            /* Footer Upgrades */
                             .footer-section {{ 
                                 text-align: center; 
-                                font-size: 11px; 
-                                color: #7f8c8d; 
                                 border-top: 2px dashed #bdc3c7; 
                                 padding-top: 15px; 
                                 margin-top: 40px; 
-                                font-weight: bold;
                             }}
-                        </style>    
+                            .footer-brand {{
+                                color: #e74c3c;
+                                font-size: 14px;
+                                font-weight: 900;
+                                text-transform: uppercase;
+                                letter-spacing: 1px;
+                                margin-bottom: 5px;
+                                font-family: 'Helvetica', 'Arial', sans-serif !important;
+                            }}
+                            .footer-disclaimer {{
+                                font-size: 11px;
+                                color: #7f8c8d;
+                                font-weight: bold;
+                                margin: 0;
+                            }}
+                        </style>
                     </head>
                     <body>
                         <table class="header-table">
@@ -807,7 +833,8 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                         </div>
                         
                         <div class="footer-section">
-                            {pdf_footer_text}
+                            <div class="footer-brand">Generated by Achala Digital Vaidya</div>
+                            <div class="footer-disclaimer">{pdf_footer_text}</div>
                         </div>
                     </body>
                     </html>
