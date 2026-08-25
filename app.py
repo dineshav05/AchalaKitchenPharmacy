@@ -707,8 +707,9 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                                 color: #2b2b2b; 
                                 font-size: 13px; 
                                 line-height: 1.6; 
+                                background-color: #fcfcfc;
                             }}
-                            
+
                             /* Strict image constraint rules for WeasyPrint */
                             img {{
                                 max-width: 100%;
@@ -724,7 +725,7 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                             /* Header structure & typography */
                             .header-table {{
                                 width: 100%;
-                                border-bottom: 2px solid #0f4c5c;
+                                border-bottom: 3px solid #e74c3c; /* Emergency Red Accent */
                                 padding-bottom: 12px;
                                 margin-bottom: 20px;
                                 table-layout: fixed;
@@ -732,36 +733,61 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                             .english-header h2 {{ 
                                 font-family: 'Helvetica', 'Arial', sans-serif !important;
                                 margin: 0; 
-                                color: #0f4c5c; 
-                                font-size: 22px; 
-                                font-weight: bold;
-                                line-height: 1.2;
+                                color: #2c3e50; 
+                                font-size: 24px; 
+                                font-weight: 900;
+                                letter-spacing: -0.5px;
                             }}
                             .english-header p {{ 
                                 font-family: 'Helvetica', 'Arial', sans-serif !important;
                                 margin: 4px 0 0 0; 
-                                color: #555; 
-                                font-size: 11px; 
+                                color: #e74c3c; 
+                                font-size: 12px; 
+                                font-weight: bold;
+                                text-transform: uppercase;
+                                letter-spacing: 1px;
+                            }}
+                            
+                            /* Vibrant Content Sections */
+                            .content-section h3 {{ 
+                                background-color: #2c3e50; /* Deep Medical Navy */
+                                color: #ffffff; 
+                                padding: 8px 15px; 
+                                margin-top: 25px; 
+                                font-size: 15px; 
+                                border-radius: 6px;
                                 text-transform: uppercase;
                                 letter-spacing: 0.5px;
                             }}
                             
-                            .content-section h3 {{ 
-                                color: #0f4c5c; 
-                                border-bottom: 1px solid #e0e0e0; 
-                                padding-bottom: 4px; 
-                                margin-top: 20px; 
-                                font-size: 16px; 
+                            /* Color-coded Warning Lists (Mimicking R.I.C.E blocks) */
+                            .content-section ul {{
+                                background-color: #ffffff;
+                                border-left: 5px solid #3498db; /* Clinical Blue Accent */
+                                padding: 15px 15px 15px 40px;
+                                border-radius: 0 8px 8px 0;
+                                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                                margin-bottom: 15px;
                             }}
+                            
+                            .content-section li {{
+                                margin-bottom: 8px;
+                            }}
+
+                            .content-section strong {{
+                                color: #c0392b; /* Highlights important medical terms in red */
+                            }}
+                            
                             .footer-section {{ 
                                 text-align: center; 
-                                font-size: 10px; 
-                                color: #777; 
-                                border-top: 1px solid #e0e0e0; 
-                                padding-top: 12px; 
-                                margin-top: 30px; 
+                                font-size: 11px; 
+                                color: #7f8c8d; 
+                                border-top: 2px dashed #bdc3c7; 
+                                padding-top: 15px; 
+                                margin-top: 40px; 
+                                font-weight: bold;
                             }}
-                        </style>
+                        </style>    
                     </head>
                     <body>
                         <table class="header-table">
