@@ -750,7 +750,7 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 # ==============================================================
                 # PDF GENERATION 
                 # ==============================================================
-                if uploaded_files or st.session_state.app_mode == "Triage": 
+                if st.session_state.premium_unlocked: 
                     display_letterhead_report(ai_response, current_logo)
                     structured_html_content = markdown.markdown(ai_response, extensions=['extra', 'sane_lists', 'nl2br'])
                     
