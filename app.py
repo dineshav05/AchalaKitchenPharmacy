@@ -749,6 +749,33 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 st.session_state.messages.append({"role": "assistant", "content": ai_response})
                 
                 # ==============================================================
+                # AUDIO GENERATION (gTTS)
+                # ==============================================================
+                gtts_language_codes = {
+                    "English": "en",
+                    "Hindi": "hi",
+                    "Kannada": "kn",
+                    "Telugu": "te",
+                    "Tamil": "ta",
+                    "Marathi": "mr",
+                    "Malayalam": "ml"
+                }
+
+                audio_lang = gtts_language_codes.get(selected_language, "en")
+
+                # Convert the AI response to speech
+                tts = gTTS(text=ai_response, lang=audio_lang, slow=False)
+                
+                # Save to a temporary buffer
+                audio_buffer = BytesIO()
+                tts.write_to_fp(audio_buffer)
+                audio_buffer.seek(0)
+                
+                # Display the audio player in the Streamlit UI
+                st.markdown(f"**Listen to your report in {selected_language}:**")
+                st.audio(audio_buffer, format="audio/mp3")
+
+                # ==============================================================
                 # PDF GENERATION 
                 # ==============================================================
                 if st.session_state.premium_unlocked: 
@@ -942,40 +969,6 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 
             except Exception as e: 
                 st.error(f"Error communicating with the Achala Intelligence Engine. Please try again. ({str(e)})")
-
-# ==============================================================
-# AUDIO GENERATION (gTTS)
-# ==============================================================
-# Map the user's selected language to the correct gTTS language code
-gtts_language_codes = {
-    "English": "en",
-    "Hindi": "hi",
-    "Kannada": "kn",
-    "Telugu": "te",
-    "Tamil": "ta",
-    "Marathi": "mr",
-    "Malayalam": "ml"
-}
-
-# Get the correct code, default to English if not found
-audio_lang = gtts_language_codes.get(selected_language, "en")
-
-with st.spinner("🎙️ Generating audio report..."):
-    try:
-        # Convert the AI response to speech
-        tts = gTTS(text=ai_response, lang=audio_lang, slow=False)
-        
-        # Save to a temporary BytesIO buffer so we don't clutter the server with .mp3 files
-        audio_buffer = BytesIO()
-        tts.write_to_fp(audio_buffer)
-        audio_buffer.seek(0)
-        
-        # Display the audio player in the Streamlit UI
-        st.markdown(f"**Listen to your report in {selected_language}:**")
-        st.audio(audio_buffer, format="audio/mp3")
-        
-    except Exception as e:
-        st.error(f"Audio generation failed: {e}")
 
 # ==========================================
 # PERSISTENT DOWNLOAD BUTTON
