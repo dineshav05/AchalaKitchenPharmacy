@@ -220,23 +220,58 @@ def set_clinic_mode(mode):
 st.markdown("""
     <style>
     .ecosystem-wrapper { display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }
-    .ecosystem-header { color: #666; font-weight: bold; letter-spacing: 1px; font-size: 12px; background-color: #f0f2f6; padding: 8px 20px; border-radius: 20px; }
-    .main-header { text-align: center; margin-bottom: 30px; font-weight: bold; }
-    .step-header { text-align: center; margin-bottom: 10px; }
-
-    .vibrant-card-triage { background: linear-gradient(135deg, #fff0f0 0%, #ffe6e6 100%); border: 2px solid #ffcccc; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
-    .vibrant-card-ayurveda { background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%); border: 2px solid #ffe89e; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
-    .vibrant-card-allopathic { background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%); border: 2px solid #b5d7ff; border-radius: 20px; padding: 20px; margin-bottom: 10px; text-align: center; transition: transform 0.2s ease; }
+    .ecosystem-header { color: #666; font-weight: 800; letter-spacing: 1.5px; font-size: 11px; background-color: #f0f2f6; padding: 8px 20px; border-radius: 20px; text-transform: uppercase; }
+    .main-header { text-align: center; margin-bottom: 35px; font-weight: 900; color: #2c3e50; letter-spacing: -0.5px; }
     
-    .vibrant-card-triage:hover, .vibrant-card-ayurveda:hover, .vibrant-card-allopathic:hover { transform: translateY(-4px); }
+    /* Emergency Pulse Animation */
+    @keyframes subtlePulse {
+        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+        70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+    }
 
-    .card-icon { font-size: 45px; margin-bottom: 10px; }
-    .card-title { color: #2c3e50; font-weight: bold; font-size: 19px; margin-bottom: 5px; }
-    .card-subtitle { color: #7f8c8d; font-style: italic; font-size: 13px; margin-bottom: 15px; }
-    .card-description { color: #34495e; font-size: 14px; line-height: 1.5; margin-bottom: 0px;}
+    /* Upgraded Triage Card */
+    .vibrant-card-triage { 
+        background: linear-gradient(145deg, #ffffff 0%, #ffeaea 100%); 
+        border: 2px solid #ffd6d6; 
+        border-radius: 24px; 
+        padding: 30px 20px; 
+        margin-bottom: 15px; 
+        text-align: center; 
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+        animation: subtlePulse 2s infinite;
+    }
+    .vibrant-card-triage:hover { 
+        transform: translateY(-6px); 
+        box-shadow: 0 15px 30px rgba(231, 76, 60, 0.15);
+        border-color: #ff9999;
+    }
+
+    /* Upgraded Workspace Card */
+    .vibrant-card-allopathic { 
+        background: linear-gradient(145deg, #ffffff 0%, #e8f4ff 100%); 
+        border: 2px solid #cce5ff; 
+        border-radius: 24px; 
+        padding: 30px 20px; 
+        margin-bottom: 15px; 
+        text-align: center; 
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+    }
+    .vibrant-card-allopathic:hover { 
+        transform: translateY(-6px); 
+        box-shadow: 0 15px 30px rgba(52, 152, 219, 0.15);
+        border-color: #99ccff;
+    }
+
+    /* Typography & Icon Spacing */
+    .card-icon { font-size: 50px; margin-bottom: 15px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.1)); }
+    .card-title { font-weight: 900; font-size: 20px; margin-bottom: 8px; letter-spacing: -0.3px; }
+    .card-subtitle { font-style: normal; font-weight: 600; font-size: 13px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .card-description { color: #5a6c7d; font-size: 14px; line-height: 1.6; margin-bottom: 0px; font-weight: 500;}
     
-    button[kind="primary"], button[kind="secondary"] { border-radius: 12px !important; margin-top: 0px !important; }
-    div[data-testid="column"] > div > div > div[data-testid="stVerticalBlock"] > div > div { margin-top: 5px !important; }
+    /* Button Overrides for native app feel */
+    button[kind="primary"] { border-radius: 14px !important; font-weight: bold !important; padding-top: 10px !important; padding-bottom: 10px !important; }
+    button[kind="secondary"] { border-radius: 14px !important; font-weight: bold !important; padding-top: 10px !important; padding-bottom: 10px !important; border: 2px solid #e0e0e0 !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -690,7 +725,7 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                             src: url('{font_url}');
                         }}
                         """
-                        
+
                     report_html = f"""
                     <!DOCTYPE html>
                     <html>
