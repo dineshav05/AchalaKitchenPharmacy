@@ -217,37 +217,38 @@ def set_app_mode(mode):
 def set_clinic_mode(mode):
     st.session_state.clinic_mode = mode
 
-st.markdown("""
+    st.markdown("""
     <style>
+    /* Main Layout */
     .ecosystem-wrapper { display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }
-    .ecosystem-header { color: #666; font-weight: 800; letter-spacing: 1.5px; font-size: 11px; background-color: #f0f2f6; padding: 8px 20px; border-radius: 20px; text-transform: uppercase; }
-    .main-header { text-align: center; margin-bottom: 35px; font-weight: 900; color: #2c3e50; letter-spacing: -0.5px; }
+    .ecosystem-header { color: #a0aec0; font-weight: 800; letter-spacing: 1.5px; font-size: 11px; background-color: #1a202c; padding: 8px 20px; border-radius: 20px; text-transform: uppercase; }
+    .main-header { text-align: center; margin-bottom: 35px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px; }
     
     /* Emergency Pulse Animation */
     @keyframes subtlePulse {
-        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.5); }
         70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
         100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
     }
 
-    /* Upgraded Triage Card */
+    /* Dark Mode Triage Card */
     .vibrant-card-triage { 
-        background: linear-gradient(145deg, #ffffff 0%, #ffeaea 100%); 
-        border: 2px solid #ffd6d6; 
+        background: linear-gradient(145deg, #2c1616 0%, #170b0b 100%); 
+        border: 2px solid #c0392b; 
         border-radius: 24px; 
         padding: 30px 20px; 
         margin-bottom: 15px; 
         text-align: center; 
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-        animation: subtlePulse 2s infinite;
+        animation: subtlePulse 2.5s infinite;
     }
     .vibrant-card-triage:hover { 
         transform: translateY(-6px); 
-        box-shadow: 0 15px 30px rgba(231, 76, 60, 0.15);
-        border-color: #ff9999;
+        box-shadow: 0 15px 30px rgba(231, 76, 60, 0.25);
+        border-color: #e74c3c;
     }
 
-    /* Upgraded Workspace Card */
+    /* Dark Mode Workspace Card */
     .vibrant-card-ayurveda { background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%); 
         border: 2px solid #ffe89e; 
         border-radius: 20px; 
@@ -262,8 +263,8 @@ st.markdown("""
         border-color: #99ccff;
     }
     .vibrant-card-allopathic { 
-        background: linear-gradient(145deg, #ffffff 0%, #e8f4ff 100%); 
-        border: 2px solid #cce5ff; 
+        background: linear-gradient(145deg, #111b24 0%, #090e13 100%); 
+        border: 2px solid #2980b9; 
         border-radius: 24px; 
         padding: 30px 20px; 
         margin-bottom: 15px; 
@@ -272,19 +273,19 @@ st.markdown("""
     }
     .vibrant-card-allopathic:hover { 
         transform: translateY(-6px); 
-        box-shadow: 0 15px 30px rgba(52, 152, 219, 0.15);
-        border-color: #99ccff;
+        box-shadow: 0 15px 30px rgba(52, 152, 219, 0.25);
+        border-color: #3498db;
     }
 
-    /* Typography & Icon Spacing */
-    .card-icon { font-size: 50px; margin-bottom: 15px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.1)); }
-    .card-title { font-weight: 900; font-size: 20px; margin-bottom: 8px; letter-spacing: -0.3px; }
+    /* Dark Mode Typography */
+    .card-icon { font-size: 50px; margin-bottom: 15px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4)); }
+    .card-title { font-weight: 900; font-size: 20px; margin-bottom: 8px; letter-spacing: -0.3px; color: #ffffff; }
     .card-subtitle { font-style: normal; font-weight: 600; font-size: 13px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .card-description { color: #5a6c7d; font-size: 14px; line-height: 1.6; margin-bottom: 0px; font-weight: 500;}
+    .card-description { color: #cbd5e1; font-size: 14px; line-height: 1.6; margin-bottom: 0px; font-weight: 500;}
     
-    /* Button Overrides for native app feel */
+    /* Button Overrides */
     button[kind="primary"] { border-radius: 14px !important; font-weight: bold !important; padding-top: 10px !important; padding-bottom: 10px !important; }
-    button[kind="secondary"] { border-radius: 14px !important; font-weight: bold !important; padding-top: 10px !important; padding-bottom: 10px !important; border: 2px solid #e0e0e0 !important; }
+    button[kind="secondary"] { border-radius: 14px !important; font-weight: bold !important; padding-top: 10px !important; padding-bottom: 10px !important; border: 2px solid #4a5568 !important; background-color: #2d3748 !important; color: #ffffff !important; }
     </style>
     """, unsafe_allow_html=True)
 
