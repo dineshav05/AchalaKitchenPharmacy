@@ -199,28 +199,28 @@ st.markdown("""
     }
     .main-header { text-align: center; margin-bottom: 35px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px; }
     
-    /* Subtle Breathing Animation for Emergency */
-    @keyframes subtlePulse {
-        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.3); }
-        70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+    /* 🔥 Upgraded Emergency Pulse for Dark Mode */
+    @keyframes highAlertPulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.8), 0 0 15px rgba(255, 75, 75, 0.2) inset; }
+        70% { box-shadow: 0 0 0 22px rgba(255, 75, 75, 0), 0 0 5px rgba(255, 75, 75, 0) inset; }
+        100% { box-shadow: 0 0 0 0 rgba(255, 75, 75, 0), 0 0 0 rgba(255, 75, 75, 0) inset; }
     }
 
-    /* 🚨 Triage Card - Emergency Red */
+    /* 🚨 Triage Card - High Visibility Red */
     .vibrant-card-triage { 
-        background: linear-gradient(145deg, #2c1616 0%, #170b0b 100%); 
-        border: 2px solid #c0392b; 
+        background: linear-gradient(145deg, #3a1212 0%, #1a0808 100%); 
+        border: 2px solid #ff4b4b; 
         border-radius: 24px; 
         padding: 30px 20px; 
         margin-bottom: 15px; 
         text-align: center; 
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-        animation: subtlePulse 2.5s infinite;
+        animation: highAlertPulse 1.8s infinite;
     }
     .vibrant-card-triage:hover { 
         transform: translateY(-6px); 
-        box-shadow: 0 15px 30px rgba(231, 76, 60, 0.4);
-        border-color: #e74c3c;
+        box-shadow: 0 15px 35px rgba(255, 75, 75, 0.6), 0 0 20px rgba(255, 75, 75, 0.3) inset;
+        border-color: #ff7373;
     }
 
     /* 🩺 Allopathic Card - Clinical Blue */
