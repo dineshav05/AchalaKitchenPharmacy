@@ -500,12 +500,15 @@ if "uploader_key" not in st.session_state:
     st.session_state.uploader_key = 0
 if "generated_pdf" not in st.session_state:
     st.session_state.generated_pdf = None 
+if "generated_audio" not in st.session_state:
+    st.session_state.generated_audio = None
 
 def reset_for_next_patient():
     st.session_state.premium_unlocked = False
     st.session_state.payment_step = "completed"
     st.session_state.messages = [] 
     st.session_state.generated_pdf = None 
+    st.session_state.generated_audio = None  # <-- Added
     st.session_state.uploader_key += 1
 
 
@@ -763,17 +766,24 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
 
                 audio_lang = gtts_language_codes.get(selected_language, "en")
 
-                # Convert the AI response to speech
-                tts = gTTS(text=ai_response, lang=audio_lang, slow=False)
-                
-                # Save to a temporary buffer
-                audio_buffer = BytesIO()
-                tts.write_to_fp(audio_buffer)
-                audio_buffer.seek(0)
-                
-                # Display the audio player in the Streamlit UI
-                st.markdown(f"**Listen to your report in {selected_language}:**")
-                st.audio(audio_buffer, format="audio/mp3")
+                try:
+                    # Clean markdown symbols (#, *, -) so gTTS speaks smoothly
+                    clean_text_for_speech = (
+                        ai_response.replace("#", "")
+                        .replace("*", "")
+                        .replace("`", "")
+                        .strip()
+                    )
+                    
+                    tts = gTTS(text=clean_text_for_speech, lang=audio_lang, slow=False)
+                    audio_buffer = BytesIO()
+                    tts.write_to_fp(audio_buffer)
+                    audio_buffer.seek(0)
+                    
+                    # Store audio bytes in session state for persistence
+                    st.session_state.generated_audio = audio_buffer.getvalue()
+                except Exception as audio_err:
+                    st.warning(f"Audio generation skipped: {audio_err}")
 
                 # ==============================================================
                 # PDF GENERATION 
@@ -971,10 +981,15 @@ if user_input := st.chat_input("Describe your pain or upload an image above...")
                 st.error(f"Error communicating with the Achala Intelligence Engine. Please try again. ({str(e)})")
 
 # ==========================================
-# PERSISTENT DOWNLOAD BUTTON
+# PERSISTENT AUDIO PLAYER & DOWNLOAD BUTTON
 # ==========================================
-if st.session_state.generated_pdf is not None:
+if st.session_state.generated_audio is not None:
     st.markdown("---")
+    st.markdown(f"### 🔊 Listen to Your Report ({selected_language})")
+    st.audio(st.session_state.generated_audio, format="audio/mp3")
+
+if st.session_state.generated_pdf is not None:
+    st.markdown("<br>", unsafe_allow_html=True)
     st.download_button(
         label="📄 Download Official PDF Report",
         data=st.session_state.generated_pdf,
