@@ -182,42 +182,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Initialize cached clients
-client = init_openai_client()
-if not client:
-    st.error("OpenAI API Key is missing. Please set it in Streamlit Secrets.")
-    st.stop()
-
-# Encode Both Logos efficiently via cache
-logo_base64 = get_base64_image("Achala_Digital_Vaidya.png")
-allopathic_logo_base64 = get_base64_image("Allopatic_Clinic.png")
-
-# ---------------------------------------------------------
-# UNIFIED ROUTING & LANDING PAGE LOGIC
-# ---------------------------------------------------------
-query_params = st.query_params
-
-if "app_mode" in query_params:
-    st.session_state.app_mode = query_params.get("app_mode")
-if "clinic_mode" in query_params:
-    st.session_state.clinic_mode = query_params.get("clinic_mode")
-if "report_language" in query_params:
-    st.session_state.report_language = query_params.get("report_language")
-
-if "app_mode" not in st.session_state:
-    st.session_state.app_mode = None
-if "clinic_mode" not in st.session_state:
-    st.session_state.clinic_mode = None
-if "report_language" not in st.session_state:
-    st.session_state.report_language = "English"
-
-def set_app_mode(mode):
-    st.session_state.app_mode = mode
-
-def set_clinic_mode(mode):
-    st.session_state.clinic_mode = mode
-
-    st.markdown("""
+st.markdown("""
     <style>
     /* Main Layout */
     .ecosystem-wrapper { display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }
@@ -288,6 +253,41 @@ def set_clinic_mode(mode):
     button[kind="secondary"] { border-radius: 14px !important; font-weight: bold !important; padding-top: 10px !important; padding-bottom: 10px !important; border: 2px solid #4a5568 !important; background-color: #2d3748 !important; color: #ffffff !important; }
     </style>
     """, unsafe_allow_html=True)
+
+# Initialize cached clients
+client = init_openai_client()
+if not client:
+    st.error("OpenAI API Key is missing. Please set it in Streamlit Secrets.")
+    st.stop()
+
+# Encode Both Logos efficiently via cache
+logo_base64 = get_base64_image("Achala_Digital_Vaidya.png")
+allopathic_logo_base64 = get_base64_image("Allopatic_Clinic.png")
+
+# ---------------------------------------------------------
+# UNIFIED ROUTING & LANDING PAGE LOGIC
+# ---------------------------------------------------------
+query_params = st.query_params
+
+if "app_mode" in query_params:
+    st.session_state.app_mode = query_params.get("app_mode")
+if "clinic_mode" in query_params:
+    st.session_state.clinic_mode = query_params.get("clinic_mode")
+if "report_language" in query_params:
+    st.session_state.report_language = query_params.get("report_language")
+
+if "app_mode" not in st.session_state:
+    st.session_state.app_mode = None
+if "clinic_mode" not in st.session_state:
+    st.session_state.clinic_mode = None
+if "report_language" not in st.session_state:
+    st.session_state.report_language = "English"
+
+def set_app_mode(mode):
+    st.session_state.app_mode = mode
+
+def set_clinic_mode(mode):
+    st.session_state.clinic_mode = mode
 
 # GATEWAY 1: Select Triage or Workspace
 if st.session_state.app_mode is None:
