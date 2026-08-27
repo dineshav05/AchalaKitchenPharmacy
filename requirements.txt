@@ -5,3 +5,4 @@ weasyprint>=63.0
 supabase
 requests
 gTTS
+streamlit-mic-recorder

@@ -8,6 +8,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import markdown
 from gtts import gTTS
+from streamlit_mic_recorder import speech_to_text
 
 # ==========================================
 # ⚡ OPTIMIZED ASSET & CLIENT CACHING
@@ -703,7 +704,41 @@ def display_letterhead_report(ai_content, logo_base64_string):
 # ---------------------------------------------------------
 # CHAT EXECUTION BLOCK
 # ---------------------------------------------------------
-if user_input := st.chat_input("Describe your pain or upload an image above..."):
+# ==========================================
+# DUAL INPUT SYSTEM (VOICE & TEXT)
+# ==========================================
+# Map the user's selected language to standard browser Speech-to-Text codes
+stt_language_codes = {
+    "English": "en-IN",
+    "Hindi": "hi-IN",
+    "Kannada": "kn-IN",
+    "Telugu": "te-IN",
+    "Tamil": "ta-IN",
+    "Marathi": "mr-IN",
+    "Malayalam": "ml-IN"
+}
+mic_lang = stt_language_codes.get(selected_language, "en-IN")
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Render the floating microphone button right above the chat bar
+spoken_text = speech_to_text(
+    language=mic_lang,
+    start_prompt="🎙️ Tap to Speak",
+    stop_prompt="🛑 Stop Recording",
+    just_once=True,
+    key='voice_input'
+)
+
+# Render the standard typing bar
+typed_text = st.chat_input("Describe your pain, upload an image above, or tap the mic to speak...")
+
+# Capture whichever method the user chose
+user_input = spoken_text or typed_text
+
+# Trigger the AI Engine
+if user_input:
+    # ... [Your existing payload and AI generation logic continues here exactly as before] ...
     
     with st.chat_message("user"):
         st.markdown(user_input)
