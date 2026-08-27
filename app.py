@@ -721,6 +721,15 @@ mic_lang = stt_language_codes.get(selected_language, "en-IN")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
+# Render the floating microphone button right above the chat bar
+spoken_text = speech_to_text(
+    language=mic_lang,
+    start_prompt="🎙️ Tap to Speak",
+    stop_prompt="🛑 Stop Recording",
+    just_once=True,
+    key='voice_input'
+)
+
 # Render the standard typing bar
 user_input = st.chat_input("Type your symptoms, or tap your keyboard's microphone to speak...")
 
