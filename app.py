@@ -403,8 +403,29 @@ if st.session_state.app_mode == "Workspace" and st.session_state.clinic_mode is 
     st.stop()
 
 # GATEWAY 3: Triage Setup (Forces Allopathic for Safety)
+# GATEWAY 3.1: Triage Setup (Language Selection)
 if st.session_state.app_mode == "Triage" and st.session_state.clinic_mode is None:
-     st.session_state.clinic_mode = "Allopathic"
+    if st.button("⬅️ Back to Main Menu"):
+        st.session_state.app_mode = None
+        st.rerun()
+
+    st.markdown("<h1 class='main-header'>🚨 Emergency Trauma Triage</h1>", unsafe_allow_html=True)
+    st.info("For immediate assistance, please select your preferred language below.")
+    
+    col1, col2, col3 = st.columns([1, 10, 1])
+    with col2:
+        languages = ["English", "Hindi", "Kannada", "Telugu", "Tamil", "Marathi", "Malayalam"]
+        st.session_state.report_language = st.selectbox(
+            "Select Language:",
+            languages,
+            index=languages.index(st.session_state.report_language),
+            label_visibility="collapsed"
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Enter Triage Workspace", type="primary", use_container_width=True):
+            st.session_state.clinic_mode = "Allopathic"
+            st.rerun()
+    st.stop()
 
 
 # ---------------------------------------------------------
