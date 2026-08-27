@@ -731,7 +731,7 @@ spoken_text = speech_to_text(
 )
 
 # Render the standard typing bar
-user_input = st.chat_input("Type your symptoms, or tap your keyboard's microphone to speak...")
+typed_text = st.chat_input("Describe your pain, upload an image above, or tap the mic to speak...")
 
 # Capture whichever method the user chose
 user_input = spoken_text or typed_text
