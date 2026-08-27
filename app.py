@@ -184,19 +184,29 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    /* Main Layout */
+    /* Main Layout & Glowing Ecosystem Badge */
     .ecosystem-wrapper { display: flex; justify-content: center; width: 100%; margin-bottom: 15px; }
-    .ecosystem-header { color: #a0aec0; font-weight: 800; letter-spacing: 1.5px; font-size: 11px; background-color: #1a202c; padding: 8px 20px; border-radius: 20px; text-transform: uppercase; }
+    .ecosystem-header { 
+        color: #ffffff; 
+        font-weight: 800; 
+        letter-spacing: 1.5px; 
+        font-size: 11px; 
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        padding: 8px 20px; 
+        border-radius: 20px; 
+        text-transform: uppercase; 
+        box-shadow: 0 0 10px rgba(42, 82, 152, 0.5);
+    }
     .main-header { text-align: center; margin-bottom: 35px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px; }
     
-    /* Emergency Pulse Animation */
+    /* Subtle Breathing Animation for Emergency */
     @keyframes subtlePulse {
-        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.5); }
+        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.3); }
         70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
         100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
     }
 
-    /* Dark Mode Triage Card */
+    /* 🚨 Triage Card - Emergency Red */
     .vibrant-card-triage { 
         background: linear-gradient(145deg, #2c1616 0%, #170b0b 100%); 
         border: 2px solid #c0392b; 
@@ -209,24 +219,11 @@ st.markdown("""
     }
     .vibrant-card-triage:hover { 
         transform: translateY(-6px); 
-        box-shadow: 0 15px 30px rgba(231, 76, 60, 0.25);
+        box-shadow: 0 15px 30px rgba(231, 76, 60, 0.4);
         border-color: #e74c3c;
     }
 
-    /* Dark Mode Workspace Card */
-    .vibrant-card-ayurveda { background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%); 
-        border: 2px solid #ffe89e; 
-        border-radius: 20px; 
-        padding: 20px; 
-        margin-bottom: 10px; 
-        text-align: center; 
-        transition: transform 0.2s ease; 
-    }
-    .vibrant-card-ayurveda:hover { 
-        transform: translateY(-6px); 
-        box-shadow: 0 15px 30px rgba(52, 152, 219, 0.15);
-        border-color: #99ccff;
-    }
+    /* 🩺 Allopathic Card - Clinical Blue */
     .vibrant-card-allopathic { 
         background: linear-gradient(145deg, #111b24 0%, #090e13 100%); 
         border: 2px solid #2980b9; 
@@ -238,21 +235,39 @@ st.markdown("""
     }
     .vibrant-card-allopathic:hover { 
         transform: translateY(-6px); 
-        box-shadow: 0 15px 30px rgba(52, 152, 219, 0.25);
+        box-shadow: 0 15px 30px rgba(52, 152, 219, 0.4);
         border-color: #3498db;
     }
 
-    /* Dark Mode Typography */
-    .card-icon { font-size: 50px; margin-bottom: 15px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4)); }
+    /* 🌿 Ayurvedic Card - Nature Green */
+    .vibrant-card-ayurveda { 
+        background: linear-gradient(145deg, #0a1f12 0%, #040d07 100%); 
+        border: 2px solid #27ae60; 
+        border-radius: 24px; 
+        padding: 30px 20px; 
+        margin-bottom: 15px; 
+        text-align: center; 
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+    }
+    .vibrant-card-ayurveda:hover { 
+        transform: translateY(-6px); 
+        box-shadow: 0 15px 30px rgba(46, 204, 113, 0.3);
+        border-color: #2ecc71;
+    }
+
+    /* Universal Typography & Depth */
+    .card-icon { font-size: 55px; margin-bottom: 15px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.6)); }
     .card-title { font-weight: 900; font-size: 20px; margin-bottom: 8px; letter-spacing: -0.3px; color: #ffffff; }
     .card-subtitle { font-style: normal; font-weight: 600; font-size: 13px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
     .card-description { color: #cbd5e1; font-size: 14px; line-height: 1.6; margin-bottom: 0px; font-weight: 500;}
     
-    /* Button Overrides */
+    /* Premium Button Overrides */
     button[kind="primary"] { border-radius: 14px !important; font-weight: bold !important; padding-top: 10px !important; padding-bottom: 10px !important; }
-    button[kind="secondary"] { border-radius: 14px !important; font-weight: bold !important; padding-top: 10px !important; padding-bottom: 10px !important; border: 2px solid #4a5568 !important; background-color: #2d3748 !important; color: #ffffff !important; }
+    button[kind="secondary"] { border-radius: 14px !important; font-weight: bold !important; padding-top: 10px !important; padding-bottom: 10px !important; border: 2px solid #4a5568 !important; background-color: #2d3748 !important; color: #ffffff !important; transition: all 0.2s ease; }
+    button[kind="secondary"]:hover { border-color: #718096 !important; background-color: #4a5568 !important; }
     </style>
     """, unsafe_allow_html=True)
+
 
 # Initialize cached clients
 client = init_openai_client()
