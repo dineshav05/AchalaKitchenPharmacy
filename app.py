@@ -248,6 +248,19 @@ st.markdown("""
     }
 
     /* Upgraded Workspace Card */
+    .vibrant-card-ayurveda { background: linear-gradient(135deg, #fffcf0 0%, #fff7d1 100%); 
+        border: 2px solid #ffe89e; 
+        border-radius: 20px; 
+        padding: 20px; 
+        margin-bottom: 10px; 
+        text-align: center; 
+        transition: transform 0.2s ease; 
+    }
+    .vibrant-card-ayurveda:hover { 
+        transform: translateY(-6px); 
+        box-shadow: 0 15px 30px rgba(52, 152, 219, 0.15);
+        border-color: #99ccff;
+    }
     .vibrant-card-allopathic { 
         background: linear-gradient(145deg, #ffffff 0%, #e8f4ff 100%); 
         border: 2px solid #cce5ff; 
