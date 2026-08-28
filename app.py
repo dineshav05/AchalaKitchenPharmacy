@@ -561,7 +561,7 @@ if payment_status == "paid":
             st.stop()
         else:
             try:
-                supabase.table("claimed_utrs").insert({
+                supabase.table("claimed_utrs_dev").insert({
                     "utr_number": str(payment_id), 
                     "status": "PAID"
                 }).execute()
