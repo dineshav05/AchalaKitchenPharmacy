@@ -44,7 +44,7 @@ def get_base64_image(image_path):
 
 # ==========================================
 # 🧠 AI PROMPT ARCHITECTURE (UPGRADED VISION)
-# ==========================================
+# ========================================== 
 
 BASE_SAFETY_CORE = """
 You are Achala Digital Vaidya, an educational clinical and radiological literacy assistant.
